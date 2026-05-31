@@ -96,3 +96,7 @@ Thumbs.db
 # AI Tools
 .opencode/
 .superpowers/
+
+# Ignore docs md and superpowers
+docs/*.md
+docs/superpowers/
