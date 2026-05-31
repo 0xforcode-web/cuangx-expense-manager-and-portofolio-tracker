@@ -33,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.cuangx.finance.core.ui.components.CalmCard
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
@@ -66,108 +67,118 @@ fun SettingsScreen(
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            Text(
-                text = "Security",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
+            CalmCard {
+                Text(
+                    text = "Security",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
 
-            SettingsSwitch(
-                title = "Passcode Lock",
-                subtitle = "Require passcode to open app",
-                checked = uiState.passcodeEnabled,
-                onCheckedChange = viewModel::setPasscodeEnabled
-            )
+                SettingsSwitch(
+                    title = "Passcode Lock",
+                    subtitle = "Require passcode to open app",
+                    checked = uiState.passcodeEnabled,
+                    onCheckedChange = viewModel::setPasscodeEnabled
+                )
 
-            SettingsSwitch(
-                title = "Biometric Lock",
-                subtitle = "Use fingerprint or face unlock",
-                checked = uiState.biometricEnabled,
-                onCheckedChange = viewModel::setBiometricEnabled
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text(
-                text = "Appearance",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-
-            SettingsItem(
-                title = "Dark Mode",
-                subtitle = when (uiState.darkMode) {
-                    "dark" -> "Dark"
-                    "light" -> "Light"
-                    else -> "System"
-                },
-                onClick = { showDarkModeDialog = true }
-            )
+                SettingsSwitch(
+                    title = "Biometric Lock",
+                    subtitle = "Use fingerprint or face unlock",
+                    checked = uiState.biometricEnabled,
+                    onCheckedChange = viewModel::setBiometricEnabled
+                )
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Text(
-                text = "Finance",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
+            CalmCard {
+                Text(
+                    text = "Appearance",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
 
-            SettingsItem(
-                title = "Month Start Day",
-                subtitle = "Day ${uiState.startDay}",
-                onClick = { showStartDayDialog = true }
-            )
-
-            SettingsItem(
-                title = "Default Currency",
-                subtitle = uiState.defaultCurrency,
-                onClick = { showCurrencyDialog = true }
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text(
-                text = "Data",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-
-            SettingsItem(
-                title = "Backup to Excel",
-                subtitle = "Export data to .xlsx file",
-                onClick = { /* TODO: Implement backup */ }
-            )
-
-            SettingsItem(
-                title = "Restore from Backup",
-                subtitle = "Import data from backup file",
-                onClick = { /* TODO: Implement restore */ }
-            )
+                SettingsItem(
+                    title = "Dark Mode",
+                    subtitle = when (uiState.darkMode) {
+                        "dark" -> "Dark"
+                        "light" -> "Light"
+                        else -> "System"
+                    },
+                    onClick = { showDarkModeDialog = true }
+                )
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Text(
-                text = "About",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
+            CalmCard {
+                Text(
+                    text = "Finance",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
 
-            SettingsItem(
-                title = "Version",
-                subtitle = "1.0.0",
-                onClick = {}
-            )
+                SettingsItem(
+                    title = "Month Start Day",
+                    subtitle = "Day ${uiState.startDay}",
+                    onClick = { showStartDayDialog = true }
+                )
 
-            SettingsItem(
-                title = "Developer",
-                subtitle = "CuangX-by-fachriceg",
-                onClick = {}
-            )
+                SettingsItem(
+                    title = "Default Currency",
+                    subtitle = uiState.defaultCurrency,
+                    onClick = { showCurrencyDialog = true }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            CalmCard {
+                Text(
+                    text = "Data",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                SettingsItem(
+                    title = "Backup to Excel",
+                    subtitle = "Export data to .xlsx file (not available yet)",
+                    onClick = {}
+                )
+
+                SettingsItem(
+                    title = "Restore from Backup",
+                    subtitle = "Import data from backup file (not available yet)",
+                    onClick = {}
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            CalmCard {
+                Text(
+                    text = "About",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                SettingsItem(
+                    title = "Version",
+                    subtitle = "1.0.0",
+                    onClick = {}
+                )
+
+                SettingsItem(
+                    title = "Developer",
+                    subtitle = "CuangX-by-fachriceg",
+                    onClick = {}
+                )
+            }
         }
     }
 
