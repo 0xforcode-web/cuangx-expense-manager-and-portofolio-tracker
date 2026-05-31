@@ -16,6 +16,24 @@
 
 ---
 
+## Screenshots
+
+<div align="center">
+
+| Dashboard | Expense | Portfolio |
+|:---------:|:-------:|:---------:|
+| ![Dashboard](docs/screenshots/dashboard.png) | ![Expense](docs/screenshots/expense.png) | ![Portfolio](docs/screenshots/portfolio.png) |
+
+| Statistics | Settings | Dark Mode |
+|:----------:|:--------:|:---------:|
+| ![Statistics](docs/screenshots/statistics.png) | ![Settings](docs/screenshots/settings.png) | ![Dark Mode](docs/screenshots/dark-mode.png) |
+
+</div>
+
+> **Note:** Letakkan screenshot di folder `docs/screenshots/` dengan nama file di atas.
+
+---
+
 ## Features
 
 ### Expense Manager
