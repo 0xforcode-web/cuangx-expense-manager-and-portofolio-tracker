@@ -32,6 +32,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.cuangx.finance.core.ui.components.CalmCard
 import com.cuangx.finance.domain.model.DebtReceivableType
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -74,67 +75,73 @@ fun AddEditDebtScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp)
+                .padding(horizontal = 16.dp, vertical = 12.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            Text("Tipe", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(bottom = 8.dp))
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
-            ) {
-                DebtReceivableType.entries.forEach { type ->
-                    FilterChip(
-                        selected = uiState.type == type,
-                        onClick = { viewModel.updateType(type) },
-                        label = { Text(type.displayName) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer
+            CalmCard(modifier = Modifier.fillMaxWidth()) {
+                Text("Tipe", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(bottom = 8.dp))
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
+                ) {
+                    DebtReceivableType.entries.forEach { type ->
+                        FilterChip(
+                            selected = uiState.type == type,
+                            onClick = { viewModel.updateType(type) },
+                            label = { Text(type.displayName) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer
+                            )
                         )
-                    )
+                    }
                 }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = uiState.partyName,
+                    onValueChange = viewModel::updatePartyName,
+                    label = { Text(if (uiState.type == DebtReceivableType.DEBT) "Dari Siapa" else "Ke Siapa") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            OutlinedTextField(
-                value = uiState.partyName,
-                onValueChange = viewModel::updatePartyName,
-                label = { Text(if (uiState.type == DebtReceivableType.DEBT) "Dari Siapa" else "Ke Siapa") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
+            CalmCard(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = uiState.originalAmount,
+                    onValueChange = viewModel::updateOriginalAmount,
+                    label = { Text("Jumlah") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-            OutlinedTextField(
-                value = uiState.originalAmount,
-                onValueChange = viewModel::updateOriginalAmount,
-                label = { Text("Jumlah") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-            )
+                OutlinedTextField(
+                    value = uiState.interestRate,
+                    onValueChange = viewModel::updateInterestRate,
+                    label = { Text("Bunga (%)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                )
+            }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            OutlinedTextField(
-                value = uiState.interestRate,
-                onValueChange = viewModel::updateInterestRate,
-                label = { Text("Bunga (%)") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            OutlinedTextField(
-                value = uiState.note,
-                onValueChange = viewModel::updateNote,
-                label = { Text("Catatan") },
-                modifier = Modifier.fillMaxWidth(),
-                maxLines = 3
-            )
+            CalmCard(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = uiState.note,
+                    onValueChange = viewModel::updateNote,
+                    label = { Text("Catatan") },
+                    modifier = Modifier.fillMaxWidth(),
+                    maxLines = 3
+                )
+            }
 
             Spacer(modifier = Modifier.height(32.dp))
 

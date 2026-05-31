@@ -54,6 +54,7 @@ import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.rememberAsyncImagePainter
+import com.cuangx.finance.core.ui.components.CalmCard
 import com.cuangx.finance.core.util.PhotoUtils
 import com.cuangx.finance.domain.model.TransactionType
 import java.io.File
@@ -126,71 +127,51 @@ fun AddEditTransactionScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp)
+                .padding(horizontal = 16.dp, vertical = 12.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            // Transaction Type
-            Text("Type", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(bottom = 8.dp))
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                TransactionType.entries.forEach { type ->
-                    FilterChip(
-                        selected = uiState.type == type,
-                        onClick = { viewModel.updateType(type) },
-                        label = { Text(type.displayName) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer
-                        )
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Amount
-            OutlinedTextField(
-                value = uiState.amount,
-                onValueChange = viewModel::updateAmount,
-                label = { Text("Amount") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Account
-            Text("Account", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(bottom = 8.dp))
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                uiState.accounts.forEach { account ->
-                    FilterChip(
-                        selected = uiState.accountId == account.id,
-                        onClick = { viewModel.updateAccountId(account.id) },
-                        label = { Text(account.name) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer
-                        )
-                    )
-                }
-            }
-
-            // Transfer destination
-            if (uiState.type == TransactionType.TRANSFER) {
-                Spacer(modifier = Modifier.height(16.dp))
-                Text("To Account", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(bottom = 8.dp))
+            CalmCard(modifier = Modifier.fillMaxWidth()) {
+                Text("Type", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(bottom = 8.dp))
                 FlowRow(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    uiState.accounts.filter { it.id != uiState.accountId }.forEach { account ->
+                    TransactionType.entries.forEach { type ->
                         FilterChip(
-                            selected = uiState.toAccountId == account.id,
-                            onClick = { viewModel.updateToAccountId(account.id) },
+                            selected = uiState.type == type,
+                            onClick = { viewModel.updateType(type) },
+                            label = { Text(type.displayName) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer
+                            )
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = uiState.amount,
+                    onValueChange = viewModel::updateAmount,
+                    label = { Text("Amount") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            CalmCard(modifier = Modifier.fillMaxWidth()) {
+                Text("Account", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(bottom = 8.dp))
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    uiState.accounts.forEach { account ->
+                        FilterChip(
+                            selected = uiState.accountId == account.id,
+                            onClick = { viewModel.updateAccountId(account.id) },
                             label = { Text(account.name) },
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = MaterialTheme.colorScheme.primaryContainer
@@ -198,125 +179,142 @@ fun AddEditTransactionScreen(
                         )
                     }
                 }
-            }
 
-            // Category
-            if (uiState.type != TransactionType.TRANSFER) {
-                Spacer(modifier = Modifier.height(16.dp))
-                Text("Category", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(bottom = 8.dp))
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    uiState.categories
-                        .filter { it.type == uiState.type }
-                        .forEach { category ->
+                if (uiState.type == TransactionType.TRANSFER) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("To Account", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(bottom = 8.dp))
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        uiState.accounts.filter { it.id != uiState.accountId }.forEach { account ->
                             FilterChip(
-                                selected = uiState.categoryId == category.id,
-                                onClick = { viewModel.updateCategoryId(category.id) },
-                                label = { Text(category.name) },
+                                selected = uiState.toAccountId == account.id,
+                                onClick = { viewModel.updateToAccountId(account.id) },
+                                label = { Text(account.name) },
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = MaterialTheme.colorScheme.primaryContainer
                                 )
                             )
                         }
+                    }
+                }
+
+                if (uiState.type != TransactionType.TRANSFER) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Category", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(bottom = 8.dp))
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        uiState.categories
+                            .filter { it.type == uiState.type }
+                            .forEach { category ->
+                                FilterChip(
+                                    selected = uiState.categoryId == category.id,
+                                    onClick = { viewModel.updateCategoryId(category.id) },
+                                    label = { Text(category.name) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = MaterialTheme.colorScheme.primaryContainer
+                                    )
+                                )
+                            }
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            // Note
-            OutlinedTextField(
-                value = uiState.note,
-                onValueChange = viewModel::updateNote,
-                label = { Text("Note") },
-                modifier = Modifier.fillMaxWidth(),
-                maxLines = 3
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Photo Attachment
-            Text("Photo Receipt", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(bottom = 8.dp))
-
-            if (photoPath != null || uiState.photoUri != null) {
-                // Show photo preview
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .border(
-                            width = 1.dp,
-                            color = MaterialTheme.colorScheme.outline,
-                            shape = RoundedCornerShape(8.dp)
-                        )
-                ) {
-                    val displayPath = photoPath ?: uiState.photoUri
-                    displayPath?.let { path ->
-                        val file = PhotoUtils.getPhotoFile(context, path)
-                        file?.let {
-                            Image(
-                                painter = rememberAsyncImagePainter(it),
-                                contentDescription = "Receipt photo",
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Fit
-                            )
-                        }
-                    }
-
-                    // Remove photo button
-                    IconButton(
-                        onClick = {
-                            photoPath?.let { PhotoUtils.deletePhoto(it) }
-                            photoPath = null
-                            photoUri = null
-                            viewModel.updatePhotoUri("")
-                        },
-                        modifier = Modifier.align(Alignment.TopEnd)
-                    ) {
-                        Icon(
-                            Icons.Default.Close,
-                            contentDescription = "Remove photo",
-                            tint = MaterialTheme.colorScheme.error
-                        )
-                    }
-                }
-            } else {
-                // Photo picker buttons
-                FlowRow(
+            CalmCard(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = uiState.note,
+                    onValueChange = viewModel::updateNote,
+                    label = { Text("Note") },
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Button(
-                        onClick = { galleryLauncher.launch("image/*") }
-                    ) {
-                        Icon(Icons.Default.Photo, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.size(4.dp))
-                        Text("Gallery")
-                    }
+                    maxLines = 3
+                )
+            }
 
-                    Button(
-                        onClick = {
-                            val file = File(context.filesDir, "temp_camera_${System.currentTimeMillis()}.jpg")
-                            photoUri = FileProvider.getUriForFile(
-                                context,
-                                "${context.packageName}.provider",
-                                file
+            Spacer(modifier = Modifier.height(12.dp))
+
+            CalmCard(modifier = Modifier.fillMaxWidth()) {
+                Text("Photo Receipt", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(bottom = 8.dp))
+
+                if (photoPath != null || uiState.photoUri != null) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .border(
+                                width = 1.dp,
+                                color = MaterialTheme.colorScheme.outline,
+                                shape = RoundedCornerShape(8.dp)
                             )
-                            cameraLauncher.launch(photoUri!!)
-                        }
                     ) {
-                        Icon(Icons.Default.CameraAlt, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.size(4.dp))
-                        Text("Camera")
+                        val displayPath = photoPath ?: uiState.photoUri
+                        displayPath?.let { path ->
+                            val file = PhotoUtils.getPhotoFile(context, path)
+                            file?.let {
+                                Image(
+                                    painter = rememberAsyncImagePainter(it),
+                                    contentDescription = "Receipt photo",
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Fit
+                                )
+                            }
+                        }
+
+                        IconButton(
+                            onClick = {
+                                photoPath?.let { PhotoUtils.deletePhoto(it) }
+                                photoPath = null
+                                photoUri = null
+                                viewModel.updatePhotoUri("")
+                            },
+                            modifier = Modifier.align(Alignment.TopEnd)
+                        ) {
+                            Icon(
+                                Icons.Default.Close,
+                                contentDescription = "Remove photo",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
+                } else {
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Button(
+                            onClick = { galleryLauncher.launch("image/*") }
+                        ) {
+                            Icon(Icons.Default.Photo, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.size(4.dp))
+                            Text("Gallery")
+                        }
+
+                        Button(
+                            onClick = {
+                                val file = File(context.filesDir, "temp_camera_${System.currentTimeMillis()}.jpg")
+                                photoUri = FileProvider.getUriForFile(
+                                    context,
+                                    "${context.packageName}.provider",
+                                    file
+                                )
+                                cameraLauncher.launch(photoUri!!)
+                            }
+                        ) {
+                            Icon(Icons.Default.CameraAlt, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.size(4.dp))
+                            Text("Camera")
+                        }
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Save button
             Button(
                 onClick = viewModel::save,
                 modifier = Modifier.fillMaxWidth(),

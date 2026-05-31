@@ -31,6 +31,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.cuangx.finance.core.ui.components.CalmCard
 import com.cuangx.finance.domain.model.BudgetPeriod
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -73,59 +74,63 @@ fun AddEditBudgetScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp)
+                .padding(horizontal = 16.dp, vertical = 12.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            Text(
-                text = "Category",
-                style = MaterialTheme.typography.titleSmall,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
+            CalmCard(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = "Category",
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
 
-            Row(modifier = Modifier.fillMaxWidth()) {
-                uiState.categories.forEach { category ->
-                    FilterChip(
-                        selected = uiState.categoryId == category.id,
-                        onClick = { viewModel.updateCategoryId(category.id) },
-                        label = { Text(category.name) },
-                        modifier = Modifier.padding(end = 8.dp, bottom = 8.dp),
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    uiState.categories.forEach { category ->
+                        FilterChip(
+                            selected = uiState.categoryId == category.id,
+                            onClick = { viewModel.updateCategoryId(category.id) },
+                            label = { Text(category.name) },
+                            modifier = Modifier.padding(end = 8.dp, bottom = 8.dp),
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer
+                            )
                         )
-                    )
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            OutlinedTextField(
-                value = uiState.amount,
-                onValueChange = viewModel::updateAmount,
-                label = { Text("Budget Amount") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-            )
+            CalmCard(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = uiState.amount,
+                    onValueChange = viewModel::updateAmount,
+                    label = { Text("Budget Amount") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-            Text(
-                text = "Period",
-                style = MaterialTheme.typography.titleSmall,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
+                Text(
+                    text = "Period",
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
 
-            Row(modifier = Modifier.fillMaxWidth()) {
-                BudgetPeriod.entries.forEach { period ->
-                    FilterChip(
-                        selected = uiState.period == period,
-                        onClick = { viewModel.updatePeriod(period) },
-                        label = { Text(period.displayName) },
-                        modifier = Modifier.padding(end = 8.dp),
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    BudgetPeriod.entries.forEach { period ->
+                        FilterChip(
+                            selected = uiState.period == period,
+                            onClick = { viewModel.updatePeriod(period) },
+                            label = { Text(period.displayName) },
+                            modifier = Modifier.padding(end = 8.dp),
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer
+                            )
                         )
-                    )
+                    }
                 }
             }
 

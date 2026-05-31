@@ -32,6 +32,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.cuangx.finance.core.ui.components.CalmCard
 import com.cuangx.finance.domain.model.AssetType
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -74,97 +75,105 @@ fun AddEditHoldingScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp)
+                .padding(horizontal = 16.dp, vertical = 12.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            Text("Asset Type", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(bottom = 8.dp))
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
-            ) {
-                AssetType.entries.forEach { type ->
-                    FilterChip(
-                        selected = uiState.assetType == type,
-                        onClick = { viewModel.updateAssetType(type) },
-                        label = { Text(type.displayName) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer
+            CalmCard(modifier = Modifier.fillMaxWidth()) {
+                Text("Asset Type", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(bottom = 8.dp))
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
+                ) {
+                    AssetType.entries.forEach { type ->
+                        FilterChip(
+                            selected = uiState.assetType == type,
+                            onClick = { viewModel.updateAssetType(type) },
+                            label = { Text(type.displayName) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer
+                            )
                         )
-                    )
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            if (uiState.assetType.hasTicker) {
+            CalmCard(modifier = Modifier.fillMaxWidth()) {
+                if (uiState.assetType.hasTicker) {
+                    OutlinedTextField(
+                        value = uiState.ticker,
+                        onValueChange = viewModel::updateTicker,
+                        label = { Text("Ticker (e.g. BBCA.JK, BTC-USD)") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
                 OutlinedTextField(
-                    value = uiState.ticker,
-                    onValueChange = viewModel::updateTicker,
-                    label = { Text("Ticker (e.g. BBCA.JK, BTC-USD)") },
+                    value = uiState.name,
+                    onValueChange = viewModel::updateName,
+                    label = { Text("Name") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
+
                 Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = uiState.quantity,
+                    onValueChange = viewModel::updateQuantity,
+                    label = { Text(if (uiState.assetType == AssetType.GOLD) "Grams" else "Quantity") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = uiState.avgBuyPrice,
+                    onValueChange = viewModel::updateAvgBuyPrice,
+                    label = { Text("Avg Buy Price") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
             }
 
-            OutlinedTextField(
-                value = uiState.name,
-                onValueChange = viewModel::updateName,
-                label = { Text("Name") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
+            Spacer(modifier = Modifier.height(12.dp))
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            OutlinedTextField(
-                value = uiState.quantity,
-                onValueChange = viewModel::updateQuantity,
-                label = { Text(if (uiState.assetType == AssetType.GOLD) "Grams" else "Quantity") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            OutlinedTextField(
-                value = uiState.avgBuyPrice,
-                onValueChange = viewModel::updateAvgBuyPrice,
-                label = { Text("Avg Buy Price") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text("Funding Account", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(bottom = 8.dp))
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
-            ) {
-                uiState.accounts.forEach { account ->
-                    FilterChip(
-                        selected = uiState.fundingAccountId == account.id,
-                        onClick = { viewModel.updateFundingAccountId(account.id) },
-                        label = { Text(account.name) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer
+            CalmCard(modifier = Modifier.fillMaxWidth()) {
+                Text("Funding Account", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(bottom = 8.dp))
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
+                ) {
+                    uiState.accounts.forEach { account ->
+                        FilterChip(
+                            selected = uiState.fundingAccountId == account.id,
+                            onClick = { viewModel.updateFundingAccountId(account.id) },
+                            label = { Text(account.name) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer
+                            )
                         )
-                    )
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            OutlinedTextField(
-                value = uiState.note,
-                onValueChange = viewModel::updateNote,
-                label = { Text("Note") },
-                modifier = Modifier.fillMaxWidth(),
-                maxLines = 3
-            )
+            CalmCard(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = uiState.note,
+                    onValueChange = viewModel::updateNote,
+                    label = { Text("Note") },
+                    modifier = Modifier.fillMaxWidth(),
+                    maxLines = 3
+                )
+            }
 
             Spacer(modifier = Modifier.height(32.dp))
 

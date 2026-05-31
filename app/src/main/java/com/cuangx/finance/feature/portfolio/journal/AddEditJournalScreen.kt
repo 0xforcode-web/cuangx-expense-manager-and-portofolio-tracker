@@ -32,6 +32,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.cuangx.finance.core.ui.components.CalmCard
 import com.cuangx.finance.domain.model.AssetType
 import com.cuangx.finance.domain.model.JournalAction
 
@@ -75,148 +76,156 @@ fun AddEditJournalScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp)
+                .padding(horizontal = 16.dp, vertical = 12.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            Text("Aksi", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(bottom = 8.dp))
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
-            ) {
-                JournalAction.entries.forEach { action ->
-                    FilterChip(
-                        selected = uiState.action == action,
-                        onClick = { viewModel.updateAction(action) },
-                        label = { Text(action.displayName) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = when (action) {
-                                JournalAction.BUY -> MaterialTheme.colorScheme.primaryContainer
-                                JournalAction.SELL -> MaterialTheme.colorScheme.errorContainer
-                                JournalAction.DIVIDEND -> MaterialTheme.colorScheme.tertiaryContainer
-                            }
+            CalmCard(modifier = Modifier.fillMaxWidth()) {
+                Text("Aksi", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(bottom = 8.dp))
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
+                ) {
+                    JournalAction.entries.forEach { action ->
+                        FilterChip(
+                            selected = uiState.action == action,
+                            onClick = { viewModel.updateAction(action) },
+                            label = { Text(action.displayName) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = when (action) {
+                                    JournalAction.BUY -> MaterialTheme.colorScheme.primaryContainer
+                                    JournalAction.SELL -> MaterialTheme.colorScheme.errorContainer
+                                    JournalAction.DIVIDEND -> MaterialTheme.colorScheme.tertiaryContainer
+                                }
+                            )
                         )
-                    )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text("Tipe Aset", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(bottom = 8.dp))
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
+                ) {
+                    AssetType.entries.forEach { type ->
+                        FilterChip(
+                            selected = uiState.assetType == type,
+                            onClick = { viewModel.updateAssetType(type) },
+                            label = { Text(type.displayName) }
+                        )
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            Text("Tipe Aset", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(bottom = 8.dp))
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
-            ) {
-                AssetType.entries.forEach { type ->
-                    FilterChip(
-                        selected = uiState.assetType == type,
-                        onClick = { viewModel.updateAssetType(type) },
-                        label = { Text(type.displayName) }
+            CalmCard(modifier = Modifier.fillMaxWidth()) {
+                if (uiState.assetType.hasTicker) {
+                    OutlinedTextField(
+                        value = uiState.ticker,
+                        onValueChange = viewModel::updateTicker,
+                        label = { Text("Ticker (e.g. BBCA.JK, BTC-USD, GC=F)") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
                     )
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
-            }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            if (uiState.assetType.hasTicker) {
                 OutlinedTextField(
-                    value = uiState.ticker,
-                    onValueChange = viewModel::updateTicker,
-                    label = { Text("Ticker (e.g. BBCA.JK, BTC-USD, GC=F)") },
+                    value = uiState.name,
+                    onValueChange = viewModel::updateName,
+                    label = { Text("Nama Aset") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
+
                 Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = uiState.quantity,
+                    onValueChange = viewModel::updateQuantity,
+                    label = { Text(if (uiState.assetType == com.cuangx.finance.domain.model.AssetType.GOLD) "Gram" else "Jumlah (lot/unit)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = uiState.price,
+                    onValueChange = viewModel::updatePrice,
+                    label = { Text("Harga per unit") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = uiState.fee,
+                    onValueChange = viewModel::updateFee,
+                    label = { Text("Fee (opsional)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
             }
 
-            OutlinedTextField(
-                value = uiState.name,
-                onValueChange = viewModel::updateName,
-                label = { Text("Nama Aset") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
+            Spacer(modifier = Modifier.height(12.dp))
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            OutlinedTextField(
-                value = uiState.quantity,
-                onValueChange = viewModel::updateQuantity,
-                label = { Text(if (uiState.assetType == com.cuangx.finance.domain.model.AssetType.GOLD) "Gram" else "Jumlah (lot/unit)") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            OutlinedTextField(
-                value = uiState.price,
-                onValueChange = viewModel::updatePrice,
-                label = { Text("Harga per unit") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            OutlinedTextField(
-                value = uiState.fee,
-                onValueChange = viewModel::updateFee,
-                label = { Text("Fee (opsional)") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text("Sumber Dana (Account)", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(bottom = 8.dp))
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
-            ) {
-                uiState.accounts.forEach { account ->
-                    FilterChip(
-                        selected = uiState.accountId == account.id,
-                        onClick = { viewModel.updateAccountId(account.id) },
-                        label = { Text(account.name) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer
+            CalmCard(modifier = Modifier.fillMaxWidth()) {
+                Text("Sumber Dana (Account)", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(bottom = 8.dp))
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
+                ) {
+                    uiState.accounts.forEach { account ->
+                        FilterChip(
+                            selected = uiState.accountId == account.id,
+                            onClick = { viewModel.updateAccountId(account.id) },
+                            label = { Text(account.name) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer
+                            )
                         )
-                    )
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            OutlinedTextField(
-                value = uiState.reason,
-                onValueChange = viewModel::updateReason,
-                label = { Text("Alasan (opsional)") },
-                modifier = Modifier.fillMaxWidth(),
-                maxLines = 3
-            )
+            CalmCard(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = uiState.reason,
+                    onValueChange = viewModel::updateReason,
+                    label = { Text("Alasan (opsional)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    maxLines = 3
+                )
 
-            Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-            OutlinedTextField(
-                value = uiState.tags,
-                onValueChange = viewModel::updateTags,
-                label = { Text("Tags (pisahkan koma)") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
+                OutlinedTextField(
+                    value = uiState.tags,
+                    onValueChange = viewModel::updateTags,
+                    label = { Text("Tags (pisahkan koma)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
 
-            Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-            OutlinedTextField(
-                value = uiState.note,
-                onValueChange = viewModel::updateNote,
-                label = { Text("Catatan") },
-                modifier = Modifier.fillMaxWidth(),
-                maxLines = 3
-            )
+                OutlinedTextField(
+                    value = uiState.note,
+                    onValueChange = viewModel::updateNote,
+                    label = { Text("Catatan") },
+                    modifier = Modifier.fillMaxWidth(),
+                    maxLines = 3
+                )
+            }
 
             Spacer(modifier = Modifier.height(32.dp))
 

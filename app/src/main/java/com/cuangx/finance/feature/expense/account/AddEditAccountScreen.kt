@@ -32,6 +32,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.cuangx.finance.core.ui.components.CalmCard
 import com.cuangx.finance.domain.model.AccountType
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -74,73 +75,77 @@ fun AddEditAccountScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp)
+                .padding(horizontal = 16.dp, vertical = 12.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            OutlinedTextField(
-                value = uiState.name,
-                onValueChange = viewModel::updateName,
-                label = { Text("Account Name") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
+            CalmCard(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = uiState.name,
+                    onValueChange = viewModel::updateName,
+                    label = { Text("Account Name") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-            Text(
-                text = "Account Type",
-                style = MaterialTheme.typography.titleSmall,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
+                Text(
+                    text = "Account Type",
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
 
-            Row(modifier = Modifier.fillMaxWidth()) {
-                AccountType.entries.forEach { type ->
-                    FilterChip(
-                        selected = uiState.type == type,
-                        onClick = { viewModel.updateType(type) },
-                        label = { Text(type.displayName) },
-                        modifier = Modifier.padding(end = 8.dp),
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    AccountType.entries.forEach { type ->
+                        FilterChip(
+                            selected = uiState.type == type,
+                            onClick = { viewModel.updateType(type) },
+                            label = { Text(type.displayName) },
+                            modifier = Modifier.padding(end = 8.dp),
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer
+                            )
                         )
-                    )
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            OutlinedTextField(
-                value = uiState.balance,
-                onValueChange = viewModel::updateBalance,
-                label = { Text("Initial Balance") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-            )
+            CalmCard(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = uiState.balance,
+                    onValueChange = viewModel::updateBalance,
+                    label = { Text("Initial Balance") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
 
-            if (uiState.type == AccountType.CREDIT_CARD) {
-                Spacer(modifier = Modifier.height(16.dp))
+                if (uiState.type == AccountType.CREDIT_CARD) {
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    OutlinedTextField(
-                        value = uiState.creditLimit,
-                        onValueChange = viewModel::updateCreditLimit,
-                        label = { Text("Credit Limit") },
-                        modifier = Modifier.weight(1f),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                    )
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        OutlinedTextField(
+                            value = uiState.creditLimit,
+                            onValueChange = viewModel::updateCreditLimit,
+                            label = { Text("Credit Limit") },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        )
 
-                    Spacer(modifier = Modifier.width(16.dp))
+                        Spacer(modifier = Modifier.width(16.dp))
 
-                    OutlinedTextField(
-                        value = uiState.settlementDay,
-                        onValueChange = viewModel::updateSettlementDay,
-                        label = { Text("Settlement Day") },
-                        modifier = Modifier.weight(1f),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                    )
+                        OutlinedTextField(
+                            value = uiState.settlementDay,
+                            onValueChange = viewModel::updateSettlementDay,
+                            label = { Text("Settlement Day") },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        )
+                    }
                 }
             }
 

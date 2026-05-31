@@ -31,6 +31,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.cuangx.finance.core.ui.components.CalmCard
 import com.cuangx.finance.domain.model.Frequency
 import com.cuangx.finance.domain.model.TransactionType
 
@@ -74,78 +75,84 @@ fun AddEditRecurringScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp)
+                .padding(horizontal = 16.dp, vertical = 12.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            Text("Type", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(bottom = 8.dp))
-            Row(modifier = Modifier.fillMaxWidth()) {
-                TransactionType.entries.forEach { type ->
-                    FilterChip(
-                        selected = uiState.type == type,
-                        onClick = { viewModel.updateType(type) },
-                        label = { Text(type.displayName) },
-                        modifier = Modifier.padding(end = 8.dp),
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer
+            CalmCard(modifier = Modifier.fillMaxWidth()) {
+                Text("Type", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(bottom = 8.dp))
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    TransactionType.entries.forEach { type ->
+                        FilterChip(
+                            selected = uiState.type == type,
+                            onClick = { viewModel.updateType(type) },
+                            label = { Text(type.displayName) },
+                            modifier = Modifier.padding(end = 8.dp),
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer
+                            )
                         )
-                    )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = uiState.amount,
+                    onValueChange = viewModel::updateAmount,
+                    label = { Text("Amount") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            CalmCard(modifier = Modifier.fillMaxWidth()) {
+                Text("Account", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(bottom = 8.dp))
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    uiState.accounts.forEach { account ->
+                        FilterChip(
+                            selected = uiState.accountId == account.id,
+                            onClick = { viewModel.updateAccountId(account.id) },
+                            label = { Text(account.name) },
+                            modifier = Modifier.padding(end = 8.dp),
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer
+                            )
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text("Frequency", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(bottom = 8.dp))
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    Frequency.entries.forEach { freq ->
+                        FilterChip(
+                            selected = uiState.frequency == freq,
+                            onClick = { viewModel.updateFrequency(freq) },
+                            label = { Text(freq.displayName) },
+                            modifier = Modifier.padding(end = 8.dp),
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer
+                            )
+                        )
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            OutlinedTextField(
-                value = uiState.amount,
-                onValueChange = viewModel::updateAmount,
-                label = { Text("Amount") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text("Account", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(bottom = 8.dp))
-            Row(modifier = Modifier.fillMaxWidth()) {
-                uiState.accounts.forEach { account ->
-                    FilterChip(
-                        selected = uiState.accountId == account.id,
-                        onClick = { viewModel.updateAccountId(account.id) },
-                        label = { Text(account.name) },
-                        modifier = Modifier.padding(end = 8.dp),
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer
-                        )
-                    )
-                }
+            CalmCard(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = uiState.note,
+                    onValueChange = viewModel::updateNote,
+                    label = { Text("Note") },
+                    modifier = Modifier.fillMaxWidth(),
+                    maxLines = 3
+                )
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text("Frequency", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(bottom = 8.dp))
-            Row(modifier = Modifier.fillMaxWidth()) {
-                Frequency.entries.forEach { freq ->
-                    FilterChip(
-                        selected = uiState.frequency == freq,
-                        onClick = { viewModel.updateFrequency(freq) },
-                        label = { Text(freq.displayName) },
-                        modifier = Modifier.padding(end = 8.dp),
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer
-                        )
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            OutlinedTextField(
-                value = uiState.note,
-                onValueChange = viewModel::updateNote,
-                label = { Text("Note") },
-                modifier = Modifier.fillMaxWidth(),
-                maxLines = 3
-            )
 
             Spacer(modifier = Modifier.height(32.dp))
 
