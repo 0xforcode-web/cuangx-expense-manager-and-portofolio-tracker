@@ -20,6 +20,8 @@ data class AddEditCategoryUiState(
     val type: TransactionType = TransactionType.EXPENSE,
     val icon: String = "ic_category",
     val color: Long = 0xFF2196F3,
+    val parentId: Long? = null,
+    val parentName: String = "",
     val isEditing: Boolean = false,
     val isSaving: Boolean = false
 )
@@ -46,12 +48,33 @@ class AddEditCategoryViewModel @Inject constructor(
         viewModelScope.launch {
             val category = categoryRepository.getByIdOnce(categoryId) ?: return@launch
             editingCategoryId = category.id
+
+            var parentName = ""
+            if (category.parentId != null) {
+                val parent = categoryRepository.getByIdOnce(category.parentId)
+                parentName = parent?.name ?: ""
+            }
+
             _uiState.value = _uiState.value.copy(
                 name = category.name,
                 type = category.type,
                 icon = category.icon,
                 color = category.color,
+                parentId = category.parentId,
+                parentName = parentName,
                 isEditing = true
+            )
+        }
+    }
+
+    fun loadParentCategory(parentId: Long) {
+        viewModelScope.launch {
+            val parent = categoryRepository.getByIdOnce(parentId) ?: return@launch
+            _uiState.value = _uiState.value.copy(
+                parentId = parent.id,
+                parentName = parent.name,
+                type = parent.type,
+                color = parent.color
             )
         }
     }
@@ -77,7 +100,8 @@ class AddEditCategoryViewModel @Inject constructor(
                     name = state.name,
                     type = state.type,
                     icon = state.icon,
-                    color = state.color
+                    color = state.color,
+                    parentId = state.parentId
                 )
 
                 if (state.isEditing) {

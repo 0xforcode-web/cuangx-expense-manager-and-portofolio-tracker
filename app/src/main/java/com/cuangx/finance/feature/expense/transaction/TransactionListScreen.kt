@@ -5,6 +5,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,17 +18,24 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -50,7 +59,7 @@ import com.cuangx.finance.core.util.DateUtils
 import com.cuangx.finance.domain.model.Transaction
 import com.cuangx.finance.domain.model.TransactionType
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun TransactionListScreen(
     onNavigateToAddTransaction: () -> Unit,
@@ -82,11 +91,74 @@ fun TransactionListScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
+            // Search Bar
+            OutlinedTextField(
+                value = uiState.searchQuery,
+                onValueChange = viewModel::updateSearchQuery,
+                placeholder = { Text("Cari transaksi...") },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                trailingIcon = {
+                    if (uiState.searchQuery.isNotBlank()) {
+                        IconButton(onClick = { viewModel.updateSearchQuery("") }) {
+                            Icon(Icons.Default.Clear, contentDescription = "Clear")
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                shape = RoundedCornerShape(12.dp),
+                singleLine = true
+            )
+
+            // Filter Chips
+            FlowRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                FilterChip(
+                    selected = uiState.selectedType == TransactionType.INCOME,
+                    onClick = { viewModel.updateSelectedType(TransactionType.INCOME) },
+                    label = { Text("Income") },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = IncomeColor.copy(alpha = 0.2f)
+                    )
+                )
+                FilterChip(
+                    selected = uiState.selectedType == TransactionType.EXPENSE,
+                    onClick = { viewModel.updateSelectedType(TransactionType.EXPENSE) },
+                    label = { Text("Expense") },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = ExpenseColor.copy(alpha = 0.2f)
+                    )
+                )
+                FilterChip(
+                    selected = uiState.selectedType == TransactionType.TRANSFER,
+                    onClick = { viewModel.updateSelectedType(TransactionType.TRANSFER) },
+                    label = { Text("Transfer") },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = TransferColor.copy(alpha = 0.2f)
+                    )
+                )
+                if (uiState.selectedType != null || uiState.searchQuery.isNotBlank()) {
+                    FilterChip(
+                        selected = false,
+                        onClick = { viewModel.clearFilters() },
+                        label = { Text("Clear") },
+                        leadingIcon = { Icon(Icons.Default.Clear, contentDescription = null, modifier = Modifier.size(16.dp)) }
+                    )
+                }
+            }
+
+            // Summary
             MonthlySummaryCard(
                 totalIncome = uiState.totalIncome,
                 totalExpense = uiState.totalExpense
             )
 
+            // Transaction List
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -98,6 +170,20 @@ fun TransactionListScreen(
                         onClick = { onNavigateToEditTransaction(transaction.id) }
                     )
                 }
+
+                if (uiState.transactions.isEmpty() && !uiState.isLoading) {
+                    item {
+                        Text(
+                            text = if (uiState.searchQuery.isNotBlank() || uiState.selectedType != null) 
+                                "Tidak ada transaksi yang sesuai filter" 
+                            else 
+                                "Belum ada transaksi bulan ini",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
+                }
             }
         }
     }
@@ -108,7 +194,7 @@ private fun MonthlySummaryCard(totalIncome: Double, totalExpense: Double) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
@@ -116,7 +202,7 @@ private fun MonthlySummaryCard(totalIncome: Double, totalExpense: Double) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(12.dp),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -155,6 +241,17 @@ private fun TransactionItem(
     transaction: Transaction,
     onClick: () -> Unit
 ) {
+    val typeColor = when (transaction.type) {
+        TransactionType.INCOME -> IncomeColor
+        TransactionType.EXPENSE -> ExpenseColor
+        TransactionType.TRANSFER -> TransferColor
+    }
+    val typeIcon = when (transaction.type) {
+        TransactionType.INCOME -> Icons.Default.ArrowDownward
+        TransactionType.EXPENSE -> Icons.Default.ArrowUpward
+        TransactionType.TRANSFER -> Icons.Default.SwapHoriz
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -172,16 +269,16 @@ private fun TransactionItem(
         ) {
             Box(
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(36.dp)
                     .clip(CircleShape)
-                    .background(getTransactionColor(transaction.type).copy(alpha = 0.1f)),
+                    .background(typeColor.copy(alpha = 0.1f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = getTransactionIcon(transaction.type),
+                    imageVector = typeIcon,
                     contentDescription = transaction.type.displayName,
-                    tint = getTransactionColor(transaction.type),
-                    modifier = Modifier.size(20.dp)
+                    tint = typeColor,
+                    modifier = Modifier.size(18.dp)
                 )
             }
 
@@ -204,24 +301,8 @@ private fun TransactionItem(
                 text = "${if (transaction.type == TransactionType.INCOME) "+" else "-"}${CurrencyFormatter.formatIDR(transaction.amount)}",
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
-                color = getTransactionColor(transaction.type)
+                color = typeColor
             )
         }
-    }
-}
-
-private fun getTransactionColor(type: TransactionType): Color {
-    return when (type) {
-        TransactionType.INCOME -> IncomeColor
-        TransactionType.EXPENSE -> ExpenseColor
-        TransactionType.TRANSFER -> TransferColor
-    }
-}
-
-private fun getTransactionIcon(type: TransactionType): ImageVector {
-    return when (type) {
-        TransactionType.INCOME -> Icons.Default.ArrowDownward
-        TransactionType.EXPENSE -> Icons.Default.ArrowUpward
-        TransactionType.TRANSFER -> Icons.Default.SwapHoriz
     }
 }

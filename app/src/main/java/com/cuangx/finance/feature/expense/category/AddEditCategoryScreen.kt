@@ -36,14 +36,18 @@ import com.cuangx.finance.domain.model.TransactionType
 @Composable
 fun AddEditCategoryScreen(
     categoryId: Long? = null,
+    parentId: Long? = null,
     onNavigateBack: () -> Unit,
     viewModel: AddEditCategoryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    LaunchedEffect(categoryId) {
+    LaunchedEffect(categoryId, parentId) {
         if (categoryId != null && categoryId > 0) {
             viewModel.loadCategory(categoryId)
+        }
+        if (parentId != null && parentId > 0) {
+            viewModel.loadParentCategory(parentId)
         }
     }
 
@@ -59,7 +63,7 @@ fun AddEditCategoryScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (uiState.isEditing) "Edit Kategori" else "Tambah Kategori") },
+                title = { Text(if (uiState.isEditing) "Edit Kategori" else if (uiState.parentId != null) "Tambah Sub-Kategori" else "Tambah Kategori") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -101,6 +105,15 @@ fun AddEditCategoryScreen(
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
+
+            if (uiState.parentId != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Sub-kategori dari: ${uiState.parentName}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
 
             Spacer(modifier = Modifier.height(32.dp))
 
