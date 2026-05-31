@@ -14,21 +14,30 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.cuangx.finance.core.datastore.UserPreferences
 import com.cuangx.finance.core.ui.navigation.AppNavHost
 import com.cuangx.finance.core.ui.navigation.BottomNavBar
 import com.cuangx.finance.core.ui.navigation.Screen
 import com.cuangx.finance.core.ui.theme.CuangXFinanceTheme
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject
+    lateinit var userPreferences: UserPreferences
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            CuangXFinanceTheme {
+            val darkModePreference by userPreferences.darkMode.collectAsStateWithLifecycle(initialValue = "system")
+
+            CuangXFinanceTheme(darkModePreference = darkModePreference) {
                 val navController = rememberNavController()
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route

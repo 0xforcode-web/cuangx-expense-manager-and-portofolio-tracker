@@ -69,16 +69,23 @@ private val LightColorScheme = lightColorScheme(
 @Composable
 fun CuangXFinanceTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
+    darkModePreference: String = "system",
     content: @Composable () -> Unit
 ) {
-    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
+    val isDark = when (darkModePreference) {
+        "dark" -> true
+        "light" -> false
+        else -> darkTheme // "system" follows system setting
+    }
+
+    val colorScheme = if (isDark) DarkColorScheme else LightColorScheme
 
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
             window.statusBarColor = colorScheme.background.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !isDark
         }
     }
 
