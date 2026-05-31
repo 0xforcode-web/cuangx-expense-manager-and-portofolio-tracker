@@ -52,6 +52,7 @@ import com.cuangx.finance.domain.model.Category
 fun CategoryListScreen(
     onNavigateBack: () -> Unit,
     onNavigateToAddCategory: (Long?) -> Unit,
+    onNavigateToEditCategory: (Long) -> Unit,
     viewModel: CategoryListViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -93,7 +94,9 @@ fun CategoryListScreen(
                     categoryWithChildren = categoryWithChildren,
                     isExpanded = expandedCategories.contains(categoryWithChildren.category.id),
                     onToggleExpand = { viewModel.toggleExpanded(categoryWithChildren.category.id) },
-                    onAddSubCategory = { onNavigateToAddCategory(categoryWithChildren.category.id) }
+                    onAddSubCategory = { onNavigateToAddCategory(categoryWithChildren.category.id) },
+                    onEditCategory = { onNavigateToEditCategory(it.id) },
+                    onDeleteCategory = { viewModel.deleteCategory(it) }
                 )
             }
 
@@ -107,7 +110,9 @@ fun CategoryListScreen(
                     categoryWithChildren = categoryWithChildren,
                     isExpanded = expandedCategories.contains(categoryWithChildren.category.id),
                     onToggleExpand = { viewModel.toggleExpanded(categoryWithChildren.category.id) },
-                    onAddSubCategory = { onNavigateToAddCategory(categoryWithChildren.category.id) }
+                    onAddSubCategory = { onNavigateToAddCategory(categoryWithChildren.category.id) },
+                    onEditCategory = { onNavigateToEditCategory(it.id) },
+                    onDeleteCategory = { viewModel.deleteCategory(it) }
                 )
             }
         }
@@ -119,8 +124,12 @@ private fun CategoryGroupItem(
     categoryWithChildren: CategoryWithChildren,
     isExpanded: Boolean,
     onToggleExpand: () -> Unit,
-    onAddSubCategory: () -> Unit
+    onAddSubCategory: () -> Unit,
+    onEditCategory: (Category) -> Unit,
+    onDeleteCategory: (Category) -> Unit
 ) {
+    var expandedMenu by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+
     CalmCard(
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -164,13 +173,39 @@ private fun CategoryGroupItem(
                         contentDescription = if (isExpanded) "Collapse" else "Expand",
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                } else {
-                    IconButton(onClick = onAddSubCategory) {
-                        Icon(
-                            Icons.Default.Add,
-                            contentDescription = "Add Sub-category",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp)
+                }
+                
+                Box {
+                    IconButton(onClick = { expandedMenu = true }) {
+                        Icon(androidx.compose.material.icons.filled.MoreVert, contentDescription = "More options")
+                    }
+                    androidx.compose.material3.DropdownMenu(
+                        expanded = expandedMenu,
+                        onDismissRequest = { expandedMenu = false }
+                    ) {
+                        androidx.compose.material3.DropdownMenuItem(
+                            text = { Text("Edit Kategori") },
+                            onClick = {
+                                expandedMenu = false
+                                onEditCategory(categoryWithChildren.category)
+                            },
+                            leadingIcon = { Icon(androidx.compose.material.icons.filled.Edit, contentDescription = null) }
+                        )
+                        androidx.compose.material3.DropdownMenuItem(
+                            text = { Text("Hapus Kategori", color = MaterialTheme.colorScheme.error) },
+                            onClick = {
+                                expandedMenu = false
+                                onDeleteCategory(categoryWithChildren.category)
+                            },
+                            leadingIcon = { Icon(androidx.compose.material.icons.filled.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) }
+                        )
+                        androidx.compose.material3.DropdownMenuItem(
+                            text = { Text("Tambah Sub-Kategori") },
+                            onClick = {
+                                expandedMenu = false
+                                onAddSubCategory()
+                            },
+                            leadingIcon = { Icon(Icons.Default.Add, contentDescription = null) }
                         )
                     }
                 }
@@ -181,6 +216,7 @@ private fun CategoryGroupItem(
                     modifier = Modifier.padding(start = 52.dp, end = 0.dp, bottom = 0.dp)
                 ) {
                     categoryWithChildren.children.forEach { child ->
+                        var childMenuExpanded by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -196,8 +232,35 @@ private fun CategoryGroupItem(
                             Spacer(modifier = Modifier.width(CuangXSpacing.xs))
                             Text(
                                 text = child.name,
-                                style = MaterialTheme.typography.bodySmall
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier.weight(1f)
                             )
+                            Box {
+                                IconButton(onClick = { childMenuExpanded = true }, modifier = Modifier.size(32.dp)) {
+                                    Icon(androidx.compose.material.icons.filled.MoreVert, contentDescription = "More options", modifier = Modifier.size(16.dp))
+                                }
+                                androidx.compose.material3.DropdownMenu(
+                                    expanded = childMenuExpanded,
+                                    onDismissRequest = { childMenuExpanded = false }
+                                ) {
+                                    androidx.compose.material3.DropdownMenuItem(
+                                        text = { Text("Edit") },
+                                        onClick = {
+                                            childMenuExpanded = false
+                                            onEditCategory(child)
+                                        },
+                                        leadingIcon = { Icon(androidx.compose.material.icons.filled.Edit, contentDescription = null) }
+                                    )
+                                    androidx.compose.material3.DropdownMenuItem(
+                                        text = { Text("Hapus", color = MaterialTheme.colorScheme.error) },
+                                        onClick = {
+                                            childMenuExpanded = false
+                                            onDeleteCategory(child)
+                                        },
+                                        leadingIcon = { Icon(androidx.compose.material.icons.filled.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) }
+                                    )
+                                }
+                            }
                         }
                     }
 

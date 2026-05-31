@@ -185,13 +185,32 @@ fun AppNavHost(
         composable(Screen.CategoryList.route) {
             CategoryListScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToAddCategory = {
-                    navController.navigate(Screen.AddCategory.route)
+                onNavigateToAddCategory = { parentId ->
+                    navController.navigate(Screen.AddCategory.createRoute(parentId))
+                },
+                onNavigateToEditCategory = { categoryId ->
+                    navController.navigate(Screen.EditCategory.createRoute(categoryId))
                 }
             )
         }
-        composable(Screen.AddCategory.route) {
+        composable(
+            route = Screen.AddCategory.route,
+            arguments = listOf(navArgument("parentId") { type = NavType.StringType; nullable = true; defaultValue = null })
+        ) { backStackEntry ->
+            val parentIdStr = backStackEntry.arguments?.getString("parentId")
+            val parentId = parentIdStr?.toLongOrNull()
             AddEditCategoryScreen(
+                parentId = parentId,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        composable(
+            route = Screen.EditCategory.route,
+            arguments = listOf(navArgument("categoryId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val categoryId = backStackEntry.arguments?.getLong("categoryId")
+            AddEditCategoryScreen(
+                categoryId = categoryId,
                 onNavigateBack = { navController.popBackStack() }
             )
         }

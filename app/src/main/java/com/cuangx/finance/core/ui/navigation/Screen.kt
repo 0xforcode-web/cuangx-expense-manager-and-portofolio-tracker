@@ -35,7 +35,9 @@ sealed class Screen(val route: String) {
         fun createRoute(accountId: Long) = "accounts/detail/$accountId"
     }
     data object CategoryList : Screen("categories")
-    data object AddCategory : Screen("categories/add")
+    data object AddCategory : Screen("categories/add?parentId={parentId}") {
+        fun createRoute(parentId: Long? = null) = if (parentId != null) "categories/add?parentId=$parentId" else "categories/add"
+    }
     data object EditCategory : Screen("categories/edit/{categoryId}") {
         fun createRoute(categoryId: Long) = "categories/edit/$categoryId"
     }
