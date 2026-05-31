@@ -21,11 +21,14 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -42,6 +45,8 @@ fun AddEditCategoryScreen(
     viewModel: AddEditCategoryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val isSubCategoryMode = uiState.expectedParentId != null || uiState.parentId != null
 
     LaunchedEffect(categoryId, parentId) {
         if (categoryId != null && categoryId > 0) {
@@ -56,15 +61,16 @@ fun AddEditCategoryScreen(
         viewModel.event.collect { event ->
             when (event) {
                 is AddEditCategoryEvent.SaveSuccess -> onNavigateBack()
-                is AddEditCategoryEvent.ShowError -> {}
+                is AddEditCategoryEvent.ShowError -> snackbarHostState.showSnackbar(event.message)
             }
         }
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text(if (uiState.isEditing) "Edit Kategori" else if (uiState.parentId != null) "Tambah Sub-Kategori" else "Tambah Kategori") },
+                title = { Text(if (uiState.isEditing) "Edit Kategori" else if (isSubCategoryMode) "Tambah Sub-Kategori" else "Tambah Kategori") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -90,6 +96,7 @@ fun AddEditCategoryScreen(
                         FilterChip(
                             selected = uiState.type == type,
                             onClick = { viewModel.updateType(type) },
+                            enabled = !isSubCategoryMode,
                             label = { Text(type.displayName) },
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = MaterialTheme.colorScheme.primaryContainer

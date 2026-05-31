@@ -21,7 +21,9 @@ data class AddEditCategoryUiState(
     val icon: String = "ic_category",
     val color: Long = 0xFF2196F3,
     val parentId: Long? = null,
+    val expectedParentId: Long? = null,
     val parentName: String = "",
+    val parentLoadFailed: Boolean = false,
     val isEditing: Boolean = false,
     val isSaving: Boolean = false
 )
@@ -69,18 +71,30 @@ class AddEditCategoryViewModel @Inject constructor(
 
     fun loadParentCategory(parentId: Long) {
         viewModelScope.launch {
-            val parent = categoryRepository.getByIdOnce(parentId) ?: return@launch
+            _uiState.value = _uiState.value.copy(expectedParentId = parentId)
+            val parent = categoryRepository.getByIdOnce(parentId)
+            if (parent == null) {
+                _uiState.value = _uiState.value.copy(parentLoadFailed = true)
+                _event.emit(AddEditCategoryEvent.ShowError("Kategori induk tidak ditemukan"))
+                return@launch
+            }
+
             _uiState.value = _uiState.value.copy(
                 parentId = parent.id,
                 parentName = parent.name,
                 type = parent.type,
-                color = parent.color
+                color = parent.color,
+                parentLoadFailed = false
             )
         }
     }
 
     fun updateName(name: String) { _uiState.value = _uiState.value.copy(name = name) }
-    fun updateType(type: TransactionType) { _uiState.value = _uiState.value.copy(type = type) }
+    fun updateType(type: TransactionType) {
+        val state = _uiState.value
+        if (state.expectedParentId != null || state.parentId != null) return
+        _uiState.value = state.copy(type = type)
+    }
     fun updateIcon(icon: String) { _uiState.value = _uiState.value.copy(icon = icon) }
     fun updateColor(color: Long) { _uiState.value = _uiState.value.copy(color = color) }
 
@@ -88,6 +102,14 @@ class AddEditCategoryViewModel @Inject constructor(
         val state = _uiState.value
         if (state.name.isBlank()) {
             viewModelScope.launch { _event.emit(AddEditCategoryEvent.ShowError("Nama kategori tidak boleh kosong")) }
+            return
+        }
+        if (!state.isEditing && state.parentLoadFailed) {
+            viewModelScope.launch { _event.emit(AddEditCategoryEvent.ShowError("Kategori induk tidak ditemukan")) }
+            return
+        }
+        if (!state.isEditing && state.expectedParentId != null && state.parentId == null) {
+            viewModelScope.launch { _event.emit(AddEditCategoryEvent.ShowError("Kategori induk belum siap")) }
             return
         }
 
