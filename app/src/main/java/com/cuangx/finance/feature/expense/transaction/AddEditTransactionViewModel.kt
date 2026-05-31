@@ -29,7 +29,6 @@ data class AddEditTransactionUiState(
     val categoryId: Long? = null,
     val date: Long = System.currentTimeMillis(),
     val note: String = "",
-    val photoUri: String = "",
     val isBookmarked: Boolean = false,
     val isEditing: Boolean = false,
     val isSaving: Boolean = false,
@@ -97,7 +96,10 @@ class AddEditTransactionViewModel @Inject constructor(
     }
 
     fun updateAmount(amount: String) {
-        _uiState.value = _uiState.value.copy(amount = amount)
+        // Remove non-numeric characters except for one decimal point
+        val cleanAmount = amount.replace(Regex("[^0-9.]"), "")
+        if (cleanAmount.count { it == '.' } > 1) return
+        _uiState.value = _uiState.value.copy(amount = cleanAmount)
     }
 
     fun updateAccountId(accountId: Long) {
@@ -120,12 +122,19 @@ class AddEditTransactionViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(note = note)
     }
 
-    fun updateIsBookmarked(isBookmarked: Boolean) {
-        _uiState.value = _uiState.value.copy(isBookmarked = isBookmarked)
-    }
-
-    fun updatePhotoUri(photoUri: String) {
-        _uiState.value = _uiState.value.copy(photoUri = photoUri)
+    fun deleteTransaction() {
+        if (!uiState.value.isEditing) return
+        
+        _uiState.value = _uiState.value.copy(isSaving = true)
+        viewModelScope.launch {
+            try {
+                transactionRepository.deleteById(editingTransactionId)
+                _event.emit(AddEditTransactionEvent.SaveSuccess)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(isSaving = false)
+                _event.emit(AddEditTransactionEvent.ShowError(e.message ?: "Gagal menghapus transaksi"))
+            }
+        }
     }
 
     fun save() {
@@ -133,17 +142,22 @@ class AddEditTransactionViewModel @Inject constructor(
         val amount = state.amount.toDoubleOrNull()
 
         if (amount == null || amount <= 0) {
-            viewModelScope.launch { _event.emit(AddEditTransactionEvent.ShowError("Invalid amount")) }
+            viewModelScope.launch { _event.emit(AddEditTransactionEvent.ShowError("Masukkan nominal yang valid")) }
             return
         }
 
         if (state.accountId == null) {
-            viewModelScope.launch { _event.emit(AddEditTransactionEvent.ShowError("Select an account")) }
+            viewModelScope.launch { _event.emit(AddEditTransactionEvent.ShowError("Pilih akun sumber dana")) }
             return
         }
 
         if (state.type == TransactionType.TRANSFER && state.toAccountId == null) {
-            viewModelScope.launch { _event.emit(AddEditTransactionEvent.ShowError("Select destination account")) }
+            viewModelScope.launch { _event.emit(AddEditTransactionEvent.ShowError("Pilih akun tujuan transfer")) }
+            return
+        }
+
+        if (state.type != TransactionType.TRANSFER && state.categoryId == null) {
+            viewModelScope.launch { _event.emit(AddEditTransactionEvent.ShowError("Pilih kategori transaksi")) }
             return
         }
 
@@ -160,7 +174,7 @@ class AddEditTransactionViewModel @Inject constructor(
                     categoryId = if (state.type != TransactionType.TRANSFER) state.categoryId else null,
                     date = state.date,
                     note = state.note,
-                    photoUri = state.photoUri.ifBlank { null },
+                    photoUri = null,
                     isBookmarked = state.isBookmarked,
                     source = TransactionSource.EXPENSE
                 )

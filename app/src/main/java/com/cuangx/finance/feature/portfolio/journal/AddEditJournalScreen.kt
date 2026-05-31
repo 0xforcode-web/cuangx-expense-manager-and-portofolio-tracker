@@ -13,6 +13,14 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Calculate
+import androidx.compose.runtime.mutableStateOf
+import com.cuangx.finance.core.ui.components.CalculatorDialog
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -44,6 +52,8 @@ fun AddEditJournalScreen(
     viewModel: AddEditJournalViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var showDeleteDialog by remember { androidx.compose.runtime.mutableStateOf(false) }
+    var calculatorTarget by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(journalId) {
         if (journalId != null && journalId > 0) {
@@ -67,6 +77,13 @@ fun AddEditJournalScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    if (uiState.isEditing) {
+                        IconButton(onClick = { showDeleteDialog = true }) {
+                            Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
+                        }
                     }
                 }
             )
@@ -148,7 +165,12 @@ fun AddEditJournalScreen(
                     label = { Text(if (uiState.assetType == com.cuangx.finance.domain.model.AssetType.GOLD) "Gram" else "Jumlah (lot/unit)") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    trailingIcon = {
+                        IconButton(onClick = { calculatorTarget = "quantity" }) {
+                            Icon(Icons.Default.Calculate, contentDescription = "Kalkulator")
+                        }
+                    }
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -159,7 +181,12 @@ fun AddEditJournalScreen(
                     label = { Text("Harga per unit") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    trailingIcon = {
+                        IconButton(onClick = { calculatorTarget = "price" }) {
+                            Icon(Icons.Default.Calculate, contentDescription = "Kalkulator")
+                        }
+                    }
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -170,7 +197,12 @@ fun AddEditJournalScreen(
                     label = { Text("Fee (opsional)") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    trailingIcon = {
+                        IconButton(onClick = { calculatorTarget = "fee" }) {
+                            Icon(Icons.Default.Calculate, contentDescription = "Kalkulator")
+                        }
+                    }
                 )
             }
 
@@ -237,5 +269,48 @@ fun AddEditJournalScreen(
                 Text(if (uiState.isSaving) "Menyimpan..." else "Simpan")
             }
         }
+    }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Hapus Journal") },
+            text = { Text("Apakah Anda yakin ingin menghapus journal ini? Transaksi terkait akan dihapus dan saldo akun akan disesuaikan.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteDialog = false
+                        viewModel.deleteJournal()
+                    }
+                ) {
+                    Text("Hapus", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Batal")
+                }
+            }
+        )
+    }
+
+    calculatorTarget?.let { target ->
+        CalculatorDialog(
+            initialValue = when (target) {
+                "quantity" -> uiState.quantity
+                "price" -> uiState.price
+                "fee" -> uiState.fee
+                else -> ""
+            },
+            onDismiss = { calculatorTarget = null },
+            onConfirm = { result ->
+                when (target) {
+                    "quantity" -> viewModel.updateQuantity(result)
+                    "price" -> viewModel.updatePrice(result)
+                    "fee" -> viewModel.updateFee(result)
+                }
+                calculatorTarget = null
+            }
+        )
     }
 }

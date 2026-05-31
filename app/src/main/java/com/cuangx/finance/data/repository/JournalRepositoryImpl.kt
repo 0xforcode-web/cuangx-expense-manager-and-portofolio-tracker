@@ -117,9 +117,9 @@ class JournalRepositoryImpl @Inject constructor(
     override suspend fun update(entry: JournalEntry) {
         database.withTransaction {
             // Reverse old entry's balance effect
-            val oldEntry = journalEntryDao.getByIdOnce(entry.id)
-            if (oldEntry != null) {
-                val oldDomain = oldEntry.toDomain()
+            val oldEntryEntity = journalEntryDao.getByIdOnce(entry.id)
+            if (oldEntryEntity != null) {
+                val oldDomain = oldEntryEntity.toDomain()
                 val oldAmount = when (oldDomain.action) {
                     JournalAction.BUY -> oldDomain.totalAmount
                     JournalAction.SELL -> (oldDomain.quantity * oldDomain.price) - oldDomain.fee
@@ -131,6 +131,38 @@ class JournalRepositoryImpl @Inject constructor(
                     JournalAction.DIVIDEND -> -oldAmount
                 }
                 accountDao.updateBalance(oldDomain.accountId, reverseChange)
+
+                // Update associated transaction if exists
+                if (oldEntryEntity.transactionId != null) {
+                    val transactionType = when (entry.action) {
+                        JournalAction.BUY -> TransactionType.EXPENSE
+                        JournalAction.SELL -> TransactionType.INCOME
+                        JournalAction.DIVIDEND -> TransactionType.INCOME
+                    }
+                    val transactionAmount = when (entry.action) {
+                        JournalAction.BUY -> entry.totalAmount
+                        JournalAction.SELL -> (entry.quantity * entry.price) - entry.fee
+                        JournalAction.DIVIDEND -> entry.quantity * entry.price
+                    }
+                    val note = when (entry.action) {
+                        JournalAction.BUY -> "Beli ${entry.name} ${entry.quantity} @ ${entry.price}"
+                        JournalAction.SELL -> "Jual ${entry.name} ${entry.quantity} @ ${entry.price}"
+                        JournalAction.DIVIDEND -> "Dividen ${entry.name}"
+                    }
+
+                    val oldTransaction = transactionDao.getByIdOnce(oldEntryEntity.transactionId)
+                    if (oldTransaction != null) {
+                        transactionDao.update(
+                            oldTransaction.copy(
+                                type = transactionType.name,
+                                amount = transactionAmount,
+                                accountId = entry.accountId,
+                                date = entry.date,
+                                note = note
+                            )
+                        )
+                    }
+                }
             }
 
             // Update entry

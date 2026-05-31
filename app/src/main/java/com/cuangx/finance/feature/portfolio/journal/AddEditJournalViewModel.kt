@@ -102,6 +102,21 @@ class AddEditJournalViewModel @Inject constructor(
     fun updateDate(date: Long) { _uiState.value = _uiState.value.copy(date = date) }
     fun updateNote(note: String) { _uiState.value = _uiState.value.copy(note = note) }
 
+    fun deleteJournal() {
+        if (!uiState.value.isEditing) return
+
+        _uiState.value = _uiState.value.copy(isSaving = true)
+        viewModelScope.launch {
+            try {
+                journalRepository.deleteById(editingJournalId)
+                _event.emit(AddEditJournalEvent.SaveSuccess)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(isSaving = false)
+                _event.emit(AddEditJournalEvent.ShowError(e.message ?: "Gagal menghapus journal"))
+            }
+        }
+    }
+
     fun save() {
         val state = _uiState.value
         val quantity = state.quantity.toDoubleOrNull()
@@ -131,8 +146,25 @@ class AddEditJournalViewModel @Inject constructor(
             try {
                 val totalAmount = (quantity * price) + fee
                 if (state.action == JournalAction.BUY) {
-                    val balance = accountRepository.getBalance(state.accountId) ?: 0.0
-                    if (balance < totalAmount) {
+                    val currentBalance = accountRepository.getBalance(state.accountId) ?: 0.0
+                    var balanceToConsider = currentBalance
+
+                    if (state.isEditing) {
+                        val oldEntry = journalRepository.getByIdOnce(editingJournalId)
+                        if (oldEntry != null && oldEntry.accountId == state.accountId) {
+                            val oldAmount = when (oldEntry.action) {
+                                JournalAction.BUY -> oldEntry.totalAmount
+                                JournalAction.SELL -> (oldEntry.quantity * oldEntry.price) - oldEntry.fee
+                                JournalAction.DIVIDEND -> oldEntry.quantity * oldEntry.price
+                            }
+                            // Add back the old amount if it was a BUY to check if we can afford the new one
+                            if (oldEntry.action == JournalAction.BUY) {
+                                balanceToConsider += oldAmount
+                            }
+                        }
+                    }
+
+                    if (balanceToConsider < totalAmount) {
                         _uiState.value = _uiState.value.copy(isSaving = false)
                         _event.emit(AddEditJournalEvent.ShowError("Saldo tidak cukup"))
                         return@launch

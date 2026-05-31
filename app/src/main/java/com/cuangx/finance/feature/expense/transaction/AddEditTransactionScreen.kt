@@ -1,9 +1,7 @@
 package com.cuangx.finance.feature.expense.transaction
 
-import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -24,8 +22,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Photo
+import androidx.compose.material.icons.filled.Calculate
+import com.cuangx.finance.core.ui.components.CalculatorDialog
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -50,14 +51,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil.compose.rememberAsyncImagePainter
 import com.cuangx.finance.core.ui.components.CalmCard
-import com.cuangx.finance.core.util.PhotoUtils
 import com.cuangx.finance.domain.model.TransactionType
-import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -67,34 +64,9 @@ fun AddEditTransactionScreen(
     viewModel: AddEditTransactionViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val context = LocalContext.current
-    var photoUri by remember { mutableStateOf<Uri?>(null) }
-    var photoPath by remember { mutableStateOf<String?>(null) }
-
-    // Gallery picker
-    val galleryLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        uri?.let {
-            photoUri = it
-            val savedPath = PhotoUtils.savePhotoToInternal(context, it)
-            photoPath = savedPath
-            savedPath?.let { path -> viewModel.updatePhotoUri(path) }
-        }
-    }
-
-    // Camera launcher
-    val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicture()
-    ) { success: Boolean ->
-        if (success) {
-            photoUri?.let { uri ->
-                val savedPath = PhotoUtils.savePhotoToInternal(context, uri)
-                photoPath = savedPath
-                savedPath?.let { path -> viewModel.updatePhotoUri(path) }
-            }
-        }
-    }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var showCalculator by remember { mutableStateOf(false) }
 
     LaunchedEffect(transactionId) {
         if (transactionId != null && transactionId > 0) {
@@ -106,7 +78,9 @@ fun AddEditTransactionScreen(
         viewModel.event.collect { event ->
             when (event) {
                 is AddEditTransactionEvent.SaveSuccess -> onNavigateBack()
-                is AddEditTransactionEvent.ShowError -> {}
+                is AddEditTransactionEvent.ShowError -> {
+                    android.widget.Toast.makeText(context, event.message, android.widget.Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
@@ -118,6 +92,13 @@ fun AddEditTransactionScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    if (uiState.isEditing) {
+                        IconButton(onClick = { showDeleteDialog = true }) {
+                            Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
+                        }
                     }
                 }
             )
@@ -156,7 +137,12 @@ fun AddEditTransactionScreen(
                     label = { Text("Amount") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    trailingIcon = {
+                        IconButton(onClick = { showCalculator = true }) {
+                            Icon(Icons.Default.Calculate, contentDescription = "Kalkulator")
+                        }
+                    }
                 )
             }
 
@@ -235,84 +221,6 @@ fun AddEditTransactionScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            CalmCard(modifier = Modifier.fillMaxWidth()) {
-                Text("Photo Receipt", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(bottom = 8.dp))
-
-                if (photoPath != null || uiState.photoUri != null) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .border(
-                                width = 1.dp,
-                                color = MaterialTheme.colorScheme.outline,
-                                shape = RoundedCornerShape(8.dp)
-                            )
-                    ) {
-                        val displayPath = photoPath ?: uiState.photoUri
-                        displayPath?.let { path ->
-                            val file = PhotoUtils.getPhotoFile(context, path)
-                            file?.let {
-                                Image(
-                                    painter = rememberAsyncImagePainter(it),
-                                    contentDescription = "Receipt photo",
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = ContentScale.Fit
-                                )
-                            }
-                        }
-
-                        IconButton(
-                            onClick = {
-                                photoPath?.let { PhotoUtils.deletePhoto(it) }
-                                photoPath = null
-                                photoUri = null
-                                viewModel.updatePhotoUri("")
-                            },
-                            modifier = Modifier.align(Alignment.TopEnd)
-                        ) {
-                            Icon(
-                                Icons.Default.Close,
-                                contentDescription = "Remove photo",
-                                tint = MaterialTheme.colorScheme.error
-                            )
-                        }
-                    }
-                } else {
-                    FlowRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Button(
-                            onClick = { galleryLauncher.launch("image/*") }
-                        ) {
-                            Icon(Icons.Default.Photo, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.size(4.dp))
-                            Text("Gallery")
-                        }
-
-                        Button(
-                            onClick = {
-                                val file = File(context.filesDir, "temp_camera_${System.currentTimeMillis()}.jpg")
-                                photoUri = FileProvider.getUriForFile(
-                                    context,
-                                    "${context.packageName}.provider",
-                                    file
-                                )
-                                cameraLauncher.launch(photoUri!!)
-                            }
-                        ) {
-                            Icon(Icons.Default.CameraAlt, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.size(4.dp))
-                            Text("Camera")
-                        }
-                    }
-                }
-            }
-
             Spacer(modifier = Modifier.height(32.dp))
 
             Button(
@@ -323,5 +231,39 @@ fun AddEditTransactionScreen(
                 Text(if (uiState.isSaving) "Saving..." else "Save")
             }
         }
+    }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Hapus Transaksi") },
+            text = { Text("Apakah Anda yakin ingin menghapus transaksi ini? Saldo akun akan disesuaikan kembali.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteDialog = false
+                        viewModel.deleteTransaction()
+                    }
+                ) {
+                    Text("Hapus", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Batal")
+                }
+            }
+        )
+    }
+
+    if (showCalculator) {
+        CalculatorDialog(
+            initialValue = uiState.amount,
+            onDismiss = { showCalculator = false },
+            onConfirm = { result ->
+                viewModel.updateAmount(result)
+                showCalculator = false
+            }
+        )
     }
 }

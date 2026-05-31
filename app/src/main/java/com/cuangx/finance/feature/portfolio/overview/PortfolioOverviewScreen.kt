@@ -289,6 +289,13 @@ private fun HoldingItem(
         onClick = onClick,
         trailing = {
             Column(horizontalAlignment = Alignment.End) {
+                holding.currentPrice?.let {
+                    Text(
+                        text = CurrencyFormatter.formatIDR(it),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
                 Text(
                     text = CurrencyFormatter.formatIDR(holding.currentValue),
                     style = MaterialTheme.typography.titleMedium,

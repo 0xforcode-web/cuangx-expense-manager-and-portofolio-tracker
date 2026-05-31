@@ -1,13 +1,26 @@
 package com.cuangx.finance.feature.settings
 
+import android.content.Intent
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.platform.LocalContext
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.LaunchedEffect
+import androidx.core.content.FileProvider
+import com.cuangx.finance.core.util.BackupManager
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -17,9 +30,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -44,9 +59,44 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
     var showDarkModeDialog by remember { mutableStateOf(false) }
     var showStartDayDialog by remember { mutableStateOf(false) }
     var showCurrencyDialog by remember { mutableStateOf(false) }
+    var showPasscodeDialog by remember { mutableStateOf(false) }
+    var tempPasscode by remember { mutableStateOf("") }
+
+    val restoreLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let { viewModel.restoreData(it) }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.event.collect { event ->
+            when (event) {
+                is SettingsEvent.BackupSuccess -> {
+                    val uri = FileProvider.getUriForFile(
+                        context,
+                        "${context.packageName}.provider",
+                        event.file
+                    )
+                    val intent = Intent(Intent.ACTION_SEND).apply {
+                        type = "application/json"
+                        putExtra(Intent.EXTRA_STREAM, uri)
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    }
+                    context.startActivity(Intent.createChooser(intent, "Simpan Backup"))
+                }
+                is SettingsEvent.RestoreSuccess -> {
+                    Toast.makeText(context, "Data berhasil di-restore!", Toast.LENGTH_LONG).show()
+                }
+                is SettingsEvent.ShowError -> {
+                    Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -79,8 +129,25 @@ fun SettingsScreen(
                     title = "Passcode Lock",
                     subtitle = "Require passcode to open app",
                     checked = uiState.passcodeEnabled,
-                    onCheckedChange = viewModel::setPasscodeEnabled
+                    onCheckedChange = { enabled ->
+                        if (enabled && uiState.passcodeValue.isEmpty()) {
+                            showPasscodeDialog = true
+                        } else {
+                            viewModel.setPasscodeEnabled(enabled)
+                        }
+                    }
                 )
+
+                if (uiState.passcodeEnabled) {
+                    SettingsItem(
+                        title = "Change Passcode",
+                        subtitle = "Update your 4-digit security code",
+                        onClick = {
+                            tempPasscode = ""
+                            showPasscodeDialog = true
+                        }
+                    )
+                }
 
                 SettingsSwitch(
                     title = "Biometric Lock",
@@ -145,15 +212,15 @@ fun SettingsScreen(
                 )
 
                 SettingsItem(
-                    title = "Backup to Excel",
-                    subtitle = "Export data to .xlsx file (not available yet)",
-                    onClick = {}
+                    title = "Backup Data",
+                    subtitle = "Ekspor semua data ke file JSON",
+                    onClick = viewModel::backupData
                 )
 
                 SettingsItem(
                     title = "Restore from Backup",
-                    subtitle = "Import data from backup file (not available yet)",
-                    onClick = {}
+                    subtitle = "Impor data dari file backup JSON",
+                    onClick = { restoreLauncher.launch("application/json") }
                 )
             }
 
@@ -180,6 +247,77 @@ fun SettingsScreen(
                 )
             }
         }
+    }
+
+    // Passcode Dialog
+    if (showPasscodeDialog) {
+        AlertDialog(
+            onDismissRequest = { 
+                showPasscodeDialog = false
+                tempPasscode = ""
+            },
+            title = { Text(if (uiState.passcodeValue.isEmpty()) "Set Passcode" else "Change Passcode") },
+            text = {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("Enter a 4-digit passcode")
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        repeat(4) { index ->
+                            val isFilled = index < tempPasscode.length
+                            Surface(
+                                modifier = Modifier.size(16.dp),
+                                shape = MaterialTheme.shapes.small,
+                                color = if (isFilled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
+                            ) {}
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(24.dp))
+                    
+                    // Simple numeric keypad inside dialog
+                    val digits = listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "DEL")
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        digits.chunked(3).forEach { row ->
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                row.forEach { digit ->
+                                    if (digit.isEmpty()) {
+                                        Box(modifier = Modifier.size(48.dp))
+                                    } else {
+                                        OutlinedButton(
+                                            onClick = {
+                                                if (digit == "DEL") {
+                                                    if (tempPasscode.isNotEmpty()) tempPasscode = tempPasscode.dropLast(1)
+                                                } else if (tempPasscode.length < 4) {
+                                                    tempPasscode += digit
+                                                    if (tempPasscode.length == 4) {
+                                                        viewModel.setPasscodeValue(tempPasscode)
+                                                        viewModel.setPasscodeEnabled(true)
+                                                        showPasscodeDialog = false
+                                                        tempPasscode = ""
+                                                    }
+                                                }
+                                            },
+                                            modifier = Modifier.size(48.dp),
+                                            contentPadding = PaddingValues(0.dp)
+                                        ) {
+                                            Text(digit)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { 
+                    showPasscodeDialog = false
+                    tempPasscode = ""
+                }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 
     // Dark Mode Dialog

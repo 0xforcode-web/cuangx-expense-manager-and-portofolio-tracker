@@ -6,13 +6,14 @@
 package com.cuangx.finance
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,7 +32,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
 
     @Inject
     lateinit var userPreferences: UserPreferences
@@ -43,14 +44,19 @@ class MainActivity : ComponentActivity() {
             val darkModePreference by userPreferences.darkMode.collectAsStateWithLifecycle(initialValue = "system")
             val biometricEnabled by userPreferences.biometricEnabled.collectAsStateWithLifecycle(initialValue = false)
             val passcodeEnabled by userPreferences.passcodeEnabled.collectAsStateWithLifecycle(initialValue = false)
+            val savedPasscode by userPreferences.passcodeValue.collectAsStateWithLifecycle(initialValue = "")
 
-            var isUnlocked by remember { mutableStateOf(!biometricEnabled && !passcodeEnabled) }
+            var isUnlocked by remember { mutableStateOf(false) }
+            val showLockScreen by remember(biometricEnabled, passcodeEnabled, isUnlocked) {
+                derivedStateOf { (biometricEnabled || passcodeEnabled) && !isUnlocked }
+            }
 
             CuangXFinanceTheme(darkModePreference = darkModePreference) {
-                if (!isUnlocked) {
+                if (showLockScreen) {
                     LockScreen(
                         isBiometricEnabled = biometricEnabled,
                         isPasscodeEnabled = passcodeEnabled,
+                        savedPasscode = savedPasscode,
                         onUnlock = { isUnlocked = true }
                     )
                 } else {

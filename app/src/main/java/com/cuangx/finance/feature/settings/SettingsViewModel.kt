@@ -1,5 +1,10 @@
 package com.cuangx.finance.feature.settings
 
+import com.cuangx.finance.core.util.BackupManager
+import java.io.File
+import android.net.Uri
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cuangx.finance.core.datastore.UserPreferences
@@ -13,6 +18,7 @@ import javax.inject.Inject
 
 data class SettingsUiState(
     val passcodeEnabled: Boolean = false,
+    val passcodeValue: String = "",
     val biometricEnabled: Boolean = false,
     val startDay: Int = 1,
     val defaultCurrency: String = "IDR",
@@ -21,22 +27,28 @@ data class SettingsUiState(
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val userPreferences: UserPreferences
+    private val userPreferences: UserPreferences,
+    private val backupManager: BackupManager
 ) : ViewModel() {
+
+    private val _event = MutableSharedFlow<SettingsEvent>()
+    val event = _event.asSharedFlow()
 
     val uiState: StateFlow<SettingsUiState> = combine(
         userPreferences.passcodeEnabled,
+        userPreferences.passcodeValue,
         userPreferences.biometricEnabled,
         userPreferences.startDay,
         userPreferences.defaultCurrency,
         userPreferences.darkMode
-    ) { passcode, biometric, startDay, currency, darkMode ->
+    ) { flows ->
         SettingsUiState(
-            passcodeEnabled = passcode,
-            biometricEnabled = biometric,
-            startDay = startDay,
-            defaultCurrency = currency,
-            darkMode = darkMode
+            passcodeEnabled = flows[0] as Boolean,
+            passcodeValue = flows[1] as String,
+            biometricEnabled = flows[2] as Boolean,
+            startDay = flows[3] as Int,
+            defaultCurrency = flows[4] as String,
+            darkMode = flows[5] as String
         )
     }.stateIn(
         scope = viewModelScope,
@@ -46,6 +58,10 @@ class SettingsViewModel @Inject constructor(
 
     fun setPasscodeEnabled(enabled: Boolean) {
         viewModelScope.launch { userPreferences.setPasscodeEnabled(enabled) }
+    }
+
+    fun setPasscodeValue(passcode: String) {
+        viewModelScope.launch { userPreferences.setPasscodeValue(passcode) }
     }
 
     fun setBiometricEnabled(enabled: Boolean) {
@@ -63,4 +79,32 @@ class SettingsViewModel @Inject constructor(
     fun setDarkMode(mode: String) {
         viewModelScope.launch { userPreferences.setDarkMode(mode) }
     }
+
+    fun backupData() {
+        viewModelScope.launch {
+            try {
+                val file = backupManager.exportBackup()
+                _event.emit(SettingsEvent.BackupSuccess(file))
+            } catch (e: Exception) {
+                _event.emit(SettingsEvent.ShowError(e.message ?: "Gagal membuat backup"))
+            }
+        }
+    }
+
+    fun restoreData(uri: Uri) {
+        viewModelScope.launch {
+            try {
+                backupManager.restoreBackup(uri)
+                _event.emit(SettingsEvent.RestoreSuccess)
+            } catch (e: Exception) {
+                _event.emit(SettingsEvent.ShowError(e.message ?: "Gagal restore data"))
+            }
+        }
+    }
+}
+
+sealed class SettingsEvent {
+    data class BackupSuccess(val file: File) : SettingsEvent()
+    data object RestoreSuccess : SettingsEvent()
+    data class ShowError(val message: String) : SettingsEvent()
 }
