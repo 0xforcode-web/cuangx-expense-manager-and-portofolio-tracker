@@ -14,6 +14,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.cuangx.finance.feature.expense.account.AccountDetailScreen
 import com.cuangx.finance.feature.expense.account.AccountListScreen
 import com.cuangx.finance.feature.expense.account.AddEditAccountScreen
 import com.cuangx.finance.feature.expense.budget.AddEditBudgetScreen
@@ -134,7 +135,10 @@ fun AppNavHost(
             arguments = listOf(navArgument("ticker") { type = NavType.StringType })
         ) { backStackEntry ->
             val ticker = backStackEntry.arguments?.getString("ticker") ?: ""
-            HoldingDetailScreenPlaceholder(ticker = ticker, onNavigateBack = { navController.popBackStack() })
+            HoldingDetailScreen(
+                ticker = ticker,
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
 
         // Accounts
@@ -163,8 +167,18 @@ fun AppNavHost(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
-        composable(Screen.AccountDetail.route) {
-            PlaceholderScreen("Account Detail")
+        composable(
+            route = Screen.AccountDetail.route,
+            arguments = listOf(navArgument("accountId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val accountId = backStackEntry.arguments?.getLong("accountId") ?: 0
+            AccountDetailScreen(
+                accountId = accountId,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToEdit = { id ->
+                    navController.navigate(Screen.EditAccount.createRoute(id))
+                }
+            )
         }
 
         // Categories
@@ -313,42 +327,6 @@ fun AppNavHost(
         composable(Screen.Settings.route) {
             SettingsScreen(
                 onNavigateBack = { navController.popBackStack() }
-            )
-        }
-    }
-}
-
-@Composable
-fun HoldingDetailScreenPlaceholder(ticker: String, onNavigateBack: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-        contentAlignment = Alignment.Center
-    ) {
-        CalmCard {
-            Text(
-                text = "Holding detail for $ticker",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-        }
-    }
-}
-
-@Composable
-private fun PlaceholderScreen(name: String) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-        contentAlignment = Alignment.Center
-    ) {
-        CalmCard {
-            Text(
-                text = name,
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onBackground
             )
         }
     }
