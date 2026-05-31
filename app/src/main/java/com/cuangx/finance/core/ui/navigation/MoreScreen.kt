@@ -20,8 +20,6 @@ import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.PieChart
 import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -33,7 +31,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
+import com.cuangx.finance.core.ui.components.CalmCard
+import com.cuangx.finance.core.ui.components.SectionHeader
+import com.cuangx.finance.core.ui.theme.CuangXSpacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,51 +55,76 @@ fun MoreScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp)
+                .padding(CuangXSpacing.md)
                 .verticalScroll(rememberScrollState())
         ) {
-            MenuItem(
-                icon = Icons.Default.AccountBalance,
-                title = "Accounts",
-                subtitle = "Kelola akun bank, cash, e-wallet",
-                onClick = onNavigateToAccounts
-            )
-            MenuItem(
-                icon = Icons.Default.Category,
-                title = "Kategori",
-                subtitle = "Kelola kategori pemasukan & pengeluaran",
-                onClick = onNavigateToCategories
-            )
-            MenuItem(
-                icon = Icons.Default.PieChart,
-                title = "Budget",
-                subtitle = "Atur budget per kategori",
-                onClick = onNavigateToBudget
-            )
-            MenuItem(
-                icon = Icons.Default.BarChart,
-                title = "Statistik",
-                subtitle = "Lihat statistik keuangan",
-                onClick = onNavigateToStatistics
-            )
-            MenuItem(
-                icon = Icons.Default.Repeat,
-                title = "Recurring",
-                subtitle = "Transaksi berulang otomatis",
-                onClick = onNavigateToRecurring
-            )
-            MenuItem(
-                icon = Icons.Default.CreditCard,
-                title = "Utang & Piutang",
-                subtitle = "Kelola utang dan piutang",
-                onClick = onNavigateToDebts
-            )
-            MenuItem(
-                icon = Icons.Default.Settings,
-                title = "Settings",
-                subtitle = "Pengaturan aplikasi",
-                onClick = onNavigateToSettings
-            )
+            SectionHeader(title = "Money Setup")
+            Spacer(modifier = Modifier.height(CuangXSpacing.xs))
+            CalmCard(modifier = Modifier.fillMaxWidth()) {
+                MenuItem(
+                    icon = Icons.Default.AccountBalance,
+                    title = "Accounts",
+                    subtitle = "Kelola akun bank, cash, e-wallet",
+                    onClick = onNavigateToAccounts
+                )
+                MenuItem(
+                    icon = Icons.Default.Category,
+                    title = "Kategori",
+                    subtitle = "Kelola kategori pemasukan & pengeluaran",
+                    onClick = onNavigateToCategories
+                )
+            }
+
+            Spacer(modifier = Modifier.height(CuangXSpacing.md))
+
+            SectionHeader(title = "Planning")
+            Spacer(modifier = Modifier.height(CuangXSpacing.xs))
+            CalmCard(modifier = Modifier.fillMaxWidth()) {
+                MenuItem(
+                    icon = Icons.Default.PieChart,
+                    title = "Budget",
+                    subtitle = "Atur budget per kategori",
+                    onClick = onNavigateToBudget
+                )
+                MenuItem(
+                    icon = Icons.Default.BarChart,
+                    title = "Statistik",
+                    subtitle = "Lihat statistik keuangan",
+                    onClick = onNavigateToStatistics
+                )
+                MenuItem(
+                    icon = Icons.Default.Repeat,
+                    title = "Recurring",
+                    subtitle = "Transaksi berulang otomatis",
+                    onClick = onNavigateToRecurring
+                )
+            }
+
+            Spacer(modifier = Modifier.height(CuangXSpacing.md))
+
+            SectionHeader(title = "Obligations")
+            Spacer(modifier = Modifier.height(CuangXSpacing.xs))
+            CalmCard(modifier = Modifier.fillMaxWidth()) {
+                MenuItem(
+                    icon = Icons.Default.CreditCard,
+                    title = "Utang & Piutang",
+                    subtitle = "Kelola utang dan piutang",
+                    onClick = onNavigateToDebts
+                )
+            }
+
+            Spacer(modifier = Modifier.height(CuangXSpacing.md))
+
+            SectionHeader(title = "App")
+            Spacer(modifier = Modifier.height(CuangXSpacing.xs))
+            CalmCard(modifier = Modifier.fillMaxWidth()) {
+                MenuItem(
+                    icon = Icons.Default.Settings,
+                    title = "Settings",
+                    subtitle = "Pengaturan aplikasi",
+                    onClick = onNavigateToSettings
+                )
+            }
         }
     }
 }
@@ -111,45 +136,35 @@ private fun MenuItem(
     subtitle: String,
     onClick: () -> Unit
 ) {
-    Card(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            .clickable(onClick = onClick)
+            .padding(vertical = CuangXSpacing.sm),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary
+        )
+        Spacer(modifier = Modifier.width(CuangXSpacing.sm))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium
             )
-            Spacer(modifier = Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium
-                )
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
-    Spacer(modifier = Modifier.height(8.dp))
 }

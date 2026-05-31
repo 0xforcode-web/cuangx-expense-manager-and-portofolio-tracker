@@ -42,6 +42,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.cuangx.finance.core.ui.components.CalmCard
+import com.cuangx.finance.core.ui.components.SectionHeader
+import com.cuangx.finance.core.ui.theme.CuangXSpacing
 import com.cuangx.finance.domain.model.Category
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -78,16 +81,12 @@ fun CategoryListScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp)
+            verticalArrangement = Arrangement.spacedBy(CuangXSpacing.xs),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(CuangXSpacing.md)
         ) {
             item {
-                Text(
-                    text = "Pengeluaran",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
+                SectionHeader(title = "Pengeluaran")
+                Spacer(modifier = Modifier.height(CuangXSpacing.xs))
             }
             items(uiState.expenseCategories, key = { it.category.id }) { categoryWithChildren ->
                 CategoryGroupItem(
@@ -99,13 +98,9 @@ fun CategoryListScreen(
             }
 
             item {
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = "Pemasukan",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
+                Spacer(modifier = Modifier.height(CuangXSpacing.md))
+                SectionHeader(title = "Pemasukan")
+                Spacer(modifier = Modifier.height(CuangXSpacing.xs))
             }
             items(uiState.incomeCategories, key = { it.category.id }) { categoryWithChildren ->
                 CategoryGroupItem(
@@ -126,40 +121,34 @@ private fun CategoryGroupItem(
     onToggleExpand: () -> Unit,
     onAddSubCategory: () -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    CalmCard(
+        modifier = Modifier.fillMaxWidth()
     ) {
         Column {
-            // Parent category
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable(onClick = onToggleExpand)
-                    .padding(12.dp),
+                    .clickable(onClick = onToggleExpand),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(
                     modifier = Modifier
-                        .size(36.dp)
+                        .size(40.dp)
                         .clip(CircleShape)
-                        .background(Color(categoryWithChildren.category.color)),
+                        .background(Color(categoryWithChildren.category.color).copy(alpha = 0.12f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = categoryWithChildren.category.name.first().toString(),
                         style = MaterialTheme.typography.titleMedium,
-                        color = Color.White
+                        color = Color(categoryWithChildren.category.color)
                     )
                 }
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(CuangXSpacing.sm))
                 Text(
                     text = categoryWithChildren.category.name,
                     style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium,
+                    fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.weight(1f)
                 )
 
@@ -169,7 +158,7 @@ private fun CategoryGroupItem(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.width(CuangXSpacing.xxs))
                     Icon(
                         imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
                         contentDescription = if (isExpanded) "Collapse" else "Expand",
@@ -187,10 +176,9 @@ private fun CategoryGroupItem(
                 }
             }
 
-            // Sub-categories
             AnimatedVisibility(visible = isExpanded) {
                 Column(
-                    modifier = Modifier.padding(start = 48.dp, end = 12.dp, bottom = 12.dp)
+                    modifier = Modifier.padding(start = 52.dp, end = 0.dp, bottom = 0.dp)
                 ) {
                     categoryWithChildren.children.forEach { child ->
                         Row(
@@ -205,7 +193,7 @@ private fun CategoryGroupItem(
                                     .clip(CircleShape)
                                     .background(Color(child.color))
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
+                            Spacer(modifier = Modifier.width(CuangXSpacing.xs))
                             Text(
                                 text = child.name,
                                 style = MaterialTheme.typography.bodySmall
@@ -213,7 +201,6 @@ private fun CategoryGroupItem(
                         }
                     }
 
-                    // Add sub-category button
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -227,7 +214,7 @@ private fun CategoryGroupItem(
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(16.dp)
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(CuangXSpacing.xs))
                         Text(
                             text = "Tambah sub-kategori",
                             style = MaterialTheme.typography.bodySmall,
