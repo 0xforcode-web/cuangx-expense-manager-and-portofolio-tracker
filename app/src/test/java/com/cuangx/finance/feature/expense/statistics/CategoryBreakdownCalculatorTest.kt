@@ -69,11 +69,32 @@ class CategoryBreakdownCalculatorTest {
         )
 
         val uncategorized = breakdown.first { it.category.name == "Uncategorized" }
-        assertEquals(-1L, uncategorized.category.id)
+        assertEquals(0L, uncategorized.category.id)
         assertEquals(TransactionType.EXPENSE, uncategorized.category.type)
         assertEquals(0xFF9E9E9E, uncategorized.category.color)
         assertEquals(40.0, uncategorized.amount, 0.0)
         assertEquals(40.0, uncategorized.percentage, 0.0)
+    }
+
+    @Test
+    fun calculate_usesUncategorizedFallbackWhenCategoryTypeDoesNotMatchRequestedType() {
+        val salary = category(id = 1, name = "Salary", type = TransactionType.INCOME)
+
+        val breakdown = CategoryBreakdownCalculator.calculate(
+            transactions = listOf(
+                transaction(type = TransactionType.EXPENSE, amount = 75.0, categoryId = salary.id),
+            ),
+            categories = listOf(salary),
+            type = TransactionType.EXPENSE,
+        )
+
+        assertEquals(1, breakdown.size)
+        assertEquals("Uncategorized", breakdown.single().category.name)
+        assertEquals(0L, breakdown.single().category.id)
+        assertEquals(TransactionType.EXPENSE, breakdown.single().category.type)
+        assertEquals(0xFF9E9E9E, breakdown.single().category.color)
+        assertEquals(75.0, breakdown.single().amount, 0.0)
+        assertEquals(100.0, breakdown.single().percentage, 0.0)
     }
 
     private fun category(

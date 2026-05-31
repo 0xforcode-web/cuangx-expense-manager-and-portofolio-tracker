@@ -18,9 +18,11 @@ object CategoryBreakdownCalculator {
             return emptyList()
         }
 
-        val categoriesById = categories.associateBy { it.id }
+        val categoriesById = categories
+            .filter { it.type == type }
+            .associateBy { it.id }
         val uncategorized = Category(
-            id = -1,
+            id = 0,
             name = "Uncategorized",
             type = type,
             color = 0xFF9E9E9E,
