@@ -64,6 +64,7 @@ fun SettingsScreen(
     var showStartDayDialog by remember { mutableStateOf(false) }
     var showCurrencyDialog by remember { mutableStateOf(false) }
     var showPasscodeDialog by remember { mutableStateOf(false) }
+    var showWipeConfirmDialog by remember { mutableStateOf(false) }
     var tempPasscode by remember { mutableStateOf("") }
 
     val restoreLauncher = rememberLauncherForActivityResult(
@@ -90,6 +91,9 @@ fun SettingsScreen(
                 }
                 is SettingsEvent.RestoreSuccess -> {
                     Toast.makeText(context, "Data berhasil di-restore!", Toast.LENGTH_LONG).show()
+                }
+                is SettingsEvent.WipeSuccess -> {
+                    Toast.makeText(context, "Semua data telah dihapus!", Toast.LENGTH_LONG).show()
                 }
                 is SettingsEvent.ShowError -> {
                     Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
@@ -221,6 +225,13 @@ fun SettingsScreen(
                     title = "Restore from Backup",
                     subtitle = "Impor data dari file backup JSON",
                     onClick = { restoreLauncher.launch("application/json") }
+                )
+
+                SettingsItem(
+                    title = "Wipe All Data",
+                    subtitle = "Hapus semua transaksi, akun, dan pengaturan",
+                    onClick = { showWipeConfirmDialog = true },
+                    titleColor = MaterialTheme.colorScheme.error
                 )
             }
 
@@ -434,6 +445,30 @@ fun SettingsScreen(
             }
         )
     }
+
+    // Wipe Confirmation Dialog
+    if (showWipeConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showWipeConfirmDialog = false },
+            title = { Text("Hapus Semua Data?") },
+            text = { Text("Tindakan ini tidak dapat dibatalkan. Seluruh riwayat transaksi, daftar akun, portofolio, dan pengaturan aplikasi akan dihapus secara permanen.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showWipeConfirmDialog = false
+                        viewModel.wipeAllData()
+                    }
+                ) {
+                    Text("Hapus Permanen", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showWipeConfirmDialog = false }) {
+                    Text("Batal")
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -471,7 +506,8 @@ private fun SettingsSwitch(
 private fun SettingsItem(
     title: String,
     subtitle: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    titleColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface
 ) {
     Row(
         modifier = Modifier
@@ -483,7 +519,8 @@ private fun SettingsItem(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.bodyLarge
+                style = MaterialTheme.typography.bodyLarge,
+                color = titleColor
             )
             Text(
                 text = subtitle,

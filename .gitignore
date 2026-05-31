@@ -92,3 +92,7 @@ Thumbs.db
 *.swp
 *.swo
 *~
+
+# AI Tools
+.opencode/
+.superpowers/

@@ -1,6 +1,5 @@
 package com.cuangx.finance.feature.portfolio.holding
 
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cuangx.finance.domain.model.JournalAction
@@ -9,73 +8,88 @@ import com.cuangx.finance.domain.model.PriceData
 import com.cuangx.finance.domain.repository.JournalRepository
 import com.cuangx.finance.domain.repository.PriceRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class HoldingDetailUiState(
+    val ticker: String = "",
+    val name: String = "",
+    val assetType: String = "",
     val entries: List<JournalEntry> = emptyList(),
     val priceData: PriceData? = null,
     val currentQty: Double = 0.0,
     val avgBuyPrice: Double = 0.0,
-    val isLoading: Boolean = true,
-    val error: String? = null
-) {
-    val currentPrice: Double get() = priceData?.price ?: avgBuyPrice
-    val currentValue: Double get() = currentQty * currentPrice
-    val totalCost: Double get() = currentQty * avgBuyPrice
-    val pnl: Double get() = currentValue - totalCost
-    val pnlPercent: Double get() = if (totalCost > 0) (pnl / totalCost) * 100 else 0.0
-}
+    val currentValue: Double = 0.0,
+    val totalCost: Double = 0.0,
+    val pnl: Double = 0.0,
+    val pnlPercent: Double = 0.0,
+    val error: String? = null,
+    val isLoading: Boolean = true
+)
 
 @HiltViewModel
 class HoldingDetailViewModel @Inject constructor(
     private val journalRepository: JournalRepository,
-    private val priceRepository: PriceRepository,
-    savedStateHandle: SavedStateHandle
+    private val priceRepository: PriceRepository
 ) : ViewModel() {
-
-    private val ticker: String = savedStateHandle.get<String>("ticker") ?: ""
 
     private val _uiState = MutableStateFlow(HoldingDetailUiState())
     val uiState: StateFlow<HoldingDetailUiState> = _uiState.asStateFlow()
 
-    init {
-        loadHoldingData()
-    }
+    private var currentJob: kotlinx.coroutines.Job? = null
 
-    private fun loadHoldingData() {
-        viewModelScope.launch {
-            try {
-                val entries = journalRepository.getByTickerOnce(ticker)
-                val priceData = priceRepository.getPrice(ticker)
-                val currentQty = journalRepository.getCurrentQuantity(ticker)
+    fun loadHolding(ticker: String) {
+        currentJob?.cancel()
+        currentJob = viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, ticker = ticker)
+            
+            val entriesFlow = journalRepository.getByTicker(ticker)
+            val priceFlow = priceRepository.observePrice(ticker)
+            val qtyFlow = flow { emit(journalRepository.getCurrentQuantity(ticker)) }
 
+            combine(entriesFlow, priceFlow, qtyFlow) { entries, price, qty ->
+                if (entries.isEmpty()) {
+                    return@combine _uiState.value.copy(isLoading = false, error = "Aset tidak ditemukan")
+                }
+
+                val firstEntry = entries.first()
                 val buys = entries.filter { it.action == JournalAction.BUY }
                 val totalBuyQty = buys.sumOf { it.quantity }
-                val totalBuyCost = buys.sumOf { it.quantity * it.price }
+                val totalBuyCost = buys.sumOf { it.quantity * it.price + it.fee }
                 val avgBuyPrice = if (totalBuyQty > 0) totalBuyCost / totalBuyQty else 0.0
+                
+                val goldPriceData = if (firstEntry.assetType == com.cuangx.finance.domain.model.AssetType.GOLD) {
+                    priceRepository.getPrice("GOLD_GRAM_IDR")
+                } else null
 
-                _uiState.value = HoldingDetailUiState(
-                    entries = entries,
-                    priceData = priceData,
-                    currentQty = currentQty,
+                val currentPrice = when (firstEntry.assetType) {
+                    com.cuangx.finance.domain.model.AssetType.GOLD -> goldPriceData?.price ?: avgBuyPrice
+                    else -> price?.price ?: avgBuyPrice
+                }
+                
+                val currentValue = qty * currentPrice
+                val totalCost = qty * avgBuyPrice
+                val pnl = currentValue - totalCost
+                val pnlPercent = if (totalCost > 0) (pnl / totalCost) * 100 else 0.0
+
+                HoldingDetailUiState(
+                    ticker = ticker,
+                    name = firstEntry.name,
+                    assetType = firstEntry.assetType.displayName,
+                    entries = entries.sortedByDescending { it.date },
+                    priceData = price ?: goldPriceData,
+                    currentQty = qty,
                     avgBuyPrice = avgBuyPrice,
+                    currentValue = currentValue,
+                    totalCost = totalCost,
+                    pnl = pnl,
+                    pnlPercent = pnlPercent,
                     isLoading = false
                 )
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    error = e.message ?: "Failed to load holding data"
-                )
+            }.collect { newState ->
+                _uiState.value = newState
             }
         }
-    }
-
-    fun refresh() {
-        _uiState.value = _uiState.value.copy(isLoading = true)
-        loadHoldingData()
     }
 }

@@ -51,6 +51,7 @@ import com.cuangx.finance.core.ui.theme.LossColor
 import com.cuangx.finance.core.ui.theme.ProfitColor
 import com.cuangx.finance.core.util.CurrencyFormatter
 import com.cuangx.finance.domain.model.AssetType
+import com.cuangx.finance.domain.usecase.HoldingPosition
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -178,14 +179,16 @@ private fun PortfolioSummaryCard(
 private fun AssetAllocationChart(holdings: List<HoldingPosition>) {
     if (holdings.isEmpty()) return
 
+    val totalValue = holdings.sumOf { it.currentValue }
+    
     // Group by asset type
     val allocations = holdings.groupBy { it.assetType }
         .map { (type, typeHoldings) ->
-            Triple(type, typeHoldings.sumOf { it.currentValue }, typeHoldings.size)
+            val typeValue = typeHoldings.sumOf { it.currentValue }
+            val percentage = if (totalValue > 0) (typeValue / totalValue * 100) else 0.0
+            Triple(type, typeValue, percentage)
         }
         .sortedByDescending { it.second }
-
-    val totalValue = allocations.sumOf { it.second }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -232,8 +235,7 @@ private fun AssetAllocationChart(holdings: List<HoldingPosition>) {
             Spacer(modifier = Modifier.height(12.dp))
 
             // Legend
-            allocations.forEachIndexed { index, (type, value, count) ->
-                val percentage = if (totalValue > 0) (value / totalValue * 100) else 0.0
+            allocations.forEachIndexed { index, (type, value, percentage) ->
                 val color = getCategoryColor(index)
 
                 Row(

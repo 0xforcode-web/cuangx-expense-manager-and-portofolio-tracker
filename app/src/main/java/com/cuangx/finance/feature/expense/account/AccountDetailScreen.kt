@@ -49,12 +49,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cuangx.finance.core.ui.components.CalmCard
 import com.cuangx.finance.core.ui.theme.CuangXSpacing
 import com.cuangx.finance.core.util.CurrencyFormatter
+import com.cuangx.finance.core.util.DateUtils
 import com.cuangx.finance.domain.model.AccountType
 import com.cuangx.finance.domain.model.Transaction
 import com.cuangx.finance.domain.model.TransactionType
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -349,7 +347,7 @@ private fun TransactionItem(transaction: Transaction) {
                     fontWeight = FontWeight.Medium
                 )
                 Text(
-                    text = formatDate(transaction.date),
+                    text = DateUtils.formatDate(transaction.date),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -367,11 +365,6 @@ private fun TransactionItem(transaction: Transaction) {
             )
         }
     }
-}
-
-private fun formatDate(timestamp: Long): String {
-    val sdf = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
-    return sdf.format(Date(timestamp))
 }
 
 private fun getAccountIcon(type: AccountType): ImageVector {

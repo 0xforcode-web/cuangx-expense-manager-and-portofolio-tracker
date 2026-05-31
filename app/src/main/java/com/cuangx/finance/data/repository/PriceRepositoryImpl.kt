@@ -33,8 +33,8 @@ class PriceRepositoryImpl @Inject constructor(
 
         return try {
             val response = yahooFinanceApi.getQuote(ticker)
-            val meta = response.chart.result?.firstOrNull()?.meta ?: return null
-            val price = meta.regularMarketPrice ?: return null
+            val meta = response.chart.result?.firstOrNull()?.meta ?: return cached?.toDomain()
+            val price = meta.regularMarketPrice ?: return cached?.toDomain()
             val previousClose = meta.chartPreviousClose ?: price
             val changePercent = if (previousClose > 0) ((price - previousClose) / previousClose) * 100 else 0.0
 
@@ -95,8 +95,14 @@ class PriceRepositoryImpl @Inject constructor(
     override suspend fun refreshGoldPrice(): Result<PriceData> {
         return try {
             val goldResponse = yahooFinanceApi.getQuote("GC=F")
-            val goldPrice = goldResponse.chart.result?.firstOrNull()?.meta?.regularMarketPrice
+            val meta = goldResponse.chart.result?.firstOrNull()?.meta 
+                ?: return Result.failure(Exception("Failed to fetch gold price meta"))
+            
+            val goldPrice = meta.regularMarketPrice
                 ?: return Result.failure(Exception("Failed to fetch gold price"))
+
+            val previousClose = meta.chartPreviousClose ?: goldPrice
+            val changePercent = if (previousClose > 0) ((goldPrice - previousClose) / previousClose) * 100 else 0.0
 
             val usdIdrRate = getUsdIdrRate() ?: return Result.failure(Exception("Failed to fetch USD/IDR rate"))
 
@@ -107,7 +113,7 @@ class PriceRepositoryImpl @Inject constructor(
                 price = pricePerGram,
                 currency = "IDR",
                 name = "Logam Mulia",
-                changePercent = 0.0,
+                changePercent = changePercent,
                 lastUpdated = System.currentTimeMillis()
             )
 

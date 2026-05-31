@@ -1,5 +1,6 @@
 package com.cuangx.finance.feature.settings
 
+import com.cuangx.finance.core.database.CuangXDatabase
 import com.cuangx.finance.core.util.BackupManager
 import java.io.File
 import android.net.Uri
@@ -28,7 +29,8 @@ data class SettingsUiState(
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val userPreferences: UserPreferences,
-    private val backupManager: BackupManager
+    private val backupManager: BackupManager,
+    private val database: CuangXDatabase
 ) : ViewModel() {
 
     private val _event = MutableSharedFlow<SettingsEvent>()
@@ -101,10 +103,34 @@ class SettingsViewModel @Inject constructor(
             }
         }
     }
+
+    fun wipeAllData() {
+        viewModelScope.launch {
+            try {
+                // Clear database
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    database.clearAllTables()
+                }
+                
+                // Reset preferences
+                userPreferences.setPasscodeEnabled(false)
+                userPreferences.setPasscodeValue("")
+                userPreferences.setBiometricEnabled(false)
+                userPreferences.setStartDay(1)
+                userPreferences.setDefaultCurrency("IDR")
+                userPreferences.setDarkMode("system")
+                
+                _event.emit(SettingsEvent.WipeSuccess)
+            } catch (e: Exception) {
+                _event.emit(SettingsEvent.ShowError(e.message ?: "Gagal menghapus data"))
+            }
+        }
+    }
 }
 
 sealed class SettingsEvent {
     data class BackupSuccess(val file: File) : SettingsEvent()
     data object RestoreSuccess : SettingsEvent()
+    data object WipeSuccess : SettingsEvent()
     data class ShowError(val message: String) : SettingsEvent()
 }

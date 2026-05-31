@@ -7,25 +7,22 @@ import java.util.Locale
 
 object DateUtils {
 
-    private val displayFormat = SimpleDateFormat("dd MMM yyyy", Locale("id", "ID"))
-    private val displayFormatShort = SimpleDateFormat("dd MMM", Locale("id", "ID"))
-    private val monthYearFormat = SimpleDateFormat("MMMM yyyy", Locale("id", "ID"))
-    private val dayFormat = SimpleDateFormat("EEEE", Locale("id", "ID"))
+    private fun getLocale(): Locale = Locale.getDefault()
 
     fun formatDate(timestamp: Long): String {
-        return displayFormat.format(Date(timestamp))
+        return SimpleDateFormat("dd MMM yyyy", getLocale()).format(Date(timestamp))
     }
 
     fun formatDateShort(timestamp: Long): String {
-        return displayFormatShort.format(Date(timestamp))
+        return SimpleDateFormat("dd MMM", getLocale()).format(Date(timestamp))
     }
 
     fun formatMonthYear(timestamp: Long): String {
-        return monthYearFormat.format(Date(timestamp))
+        return SimpleDateFormat("MMMM yyyy", getLocale()).format(Date(timestamp))
     }
 
     fun formatDay(timestamp: Long): String {
-        return dayFormat.format(Date(timestamp))
+        return SimpleDateFormat("EEEE", getLocale()).format(Date(timestamp))
     }
 
     fun getStartOfDay(timestamp: Long): Long {

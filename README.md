@@ -192,8 +192,8 @@ Contributions are welcome! Please read the [Contributing Guidelines](CONTRIBUTIN
 ## Contact
 
 **CuangX-by-fachriceg**
-- GitHub: [@YOUR_USERNAME](https://github.com/YOUR_USERNAME)
-
+- GitHub: [@0xforcode-web](https://github.com/0xforcode-web)
+- X: [@fachriceg](https://x.com/fachriceg)
 ---
 
 ## Acknowledgments
