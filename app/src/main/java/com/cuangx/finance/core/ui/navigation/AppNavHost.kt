@@ -1,5 +1,6 @@
 package com.cuangx.finance.core.ui.navigation
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -36,6 +37,7 @@ import com.cuangx.finance.feature.portfolio.journal.JournalListScreen
 import com.cuangx.finance.feature.portfolio.networth.NetWorthScreen
 import com.cuangx.finance.feature.portfolio.overview.PortfolioOverviewScreen
 import com.cuangx.finance.feature.settings.SettingsScreen
+import com.cuangx.finance.core.ui.components.CalmCard
 
 @Composable
 fun AppNavHost(
@@ -319,26 +321,35 @@ fun AppNavHost(
 @Composable
 fun HoldingDetailScreenPlaceholder(ticker: String, onNavigateBack: () -> Unit) {
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = "Holding Detail: $ticker",
-            style = MaterialTheme.typography.headlineMedium
-        )
+        CalmCard {
+            Text(
+                text = "Holding detail for $ticker",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+        }
     }
 }
 
 @Composable
 private fun PlaceholderScreen(name: String) {
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = name,
-            style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.onBackground
-        )
+        CalmCard {
+            Text(
+                text = name,
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+        }
     }
 }
