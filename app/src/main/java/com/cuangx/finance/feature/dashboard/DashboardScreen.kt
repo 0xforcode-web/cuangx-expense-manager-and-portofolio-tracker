@@ -42,6 +42,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.cuangx.finance.core.ui.components.CalmCard
+import com.cuangx.finance.core.ui.components.DeltaText
+import com.cuangx.finance.core.ui.components.FinanceListRow
+import com.cuangx.finance.core.ui.components.HeroCard
+import com.cuangx.finance.core.ui.components.MoneyText
+import com.cuangx.finance.core.ui.components.SectionHeader
+import com.cuangx.finance.core.ui.components.signedTransactionAmount
+import com.cuangx.finance.core.ui.components.transactionAmountColor
+import com.cuangx.finance.core.ui.theme.CuangXSpacing
 import com.cuangx.finance.core.ui.theme.DebtColor
 import com.cuangx.finance.core.ui.theme.ExpenseColor
 import com.cuangx.finance.core.ui.theme.IncomeColor
@@ -66,7 +75,12 @@ fun DashboardScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("CuangX Finance") },
+                title = {
+                    Column {
+                        Text("CuangX", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Text("Financial command center", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface
                 )
@@ -98,23 +112,11 @@ fun DashboardScreen(
             }
 
             item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Recent Transactions",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "See All",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.clickable(onClick = onNavigateToTransactions)
-                    )
-                }
+                SectionHeader(
+                    title = "Recent Transactions",
+                    actionText = "See All",
+                    onAction = onNavigateToTransactions
+                )
             }
 
             items(uiState.recentTransactions, key = { it.id }) { transaction ->
@@ -126,31 +128,24 @@ fun DashboardScreen(
 
 @Composable
 private fun NetWorthCard(netWorth: Double) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
+    HeroCard(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "Total Net Worth",
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.78f)
         )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "Total Net Worth",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = CurrencyFormatter.formatIDR(netWorth),
-                style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.Bold,
-                color = if (netWorth >= 0) ProfitColor else ExpenseColor
-            )
-        }
+        Spacer(modifier = Modifier.height(CuangXSpacing.xs))
+        MoneyText(
+            amount = netWorth,
+            emphasized = true,
+            color = MaterialTheme.colorScheme.onPrimary
+        )
+        Spacer(modifier = Modifier.height(CuangXSpacing.xs))
+        Text(
+            text = if (netWorth >= 0) "Accounts + portfolio + receivables - debt" else "Debt currently exceeds tracked assets",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.72f)
+        )
     }
 }
 
@@ -323,55 +318,18 @@ private fun RecentTransactionItem(transaction: Transaction) {
         TransactionType.TRANSFER -> Icons.Default.SwapHoriz
     }
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(CircleShape)
-                    .background(typeColor.copy(alpha = 0.1f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = typeIcon,
-                    contentDescription = null,
-                    tint = typeColor,
-                    modifier = Modifier.size(18.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = transaction.note.ifEmpty { transaction.type.displayName },
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
-                )
-                Text(
-                    text = DateUtils.getRelativeDateLabel(transaction.date),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
+    FinanceListRow(
+        icon = typeIcon,
+        iconTint = typeColor,
+        title = transaction.note.ifEmpty { transaction.type.displayName },
+        subtitle = DateUtils.getRelativeDateLabel(transaction.date),
+        trailing = {
             Text(
-                text = "${if (transaction.type == TransactionType.INCOME) "+" else "-"}${CurrencyFormatter.formatIDR(transaction.amount)}",
+                text = signedTransactionAmount(transaction.type, transaction.amount),
                 style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = typeColor
+                fontWeight = FontWeight.Bold,
+                color = transactionAmountColor(transaction.type)
             )
         }
-    }
+    )
 }
