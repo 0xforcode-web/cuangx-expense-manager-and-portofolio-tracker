@@ -43,7 +43,7 @@
 - **Recurring transactions** — Transaksi otomatis berulang
 - **Statistik & Grafik** — Analisis keuangan visual (pie, bar, line chart)
 - **Calculator** — Kalkulator inline untuk input transaksi
-- **Backup/Restore** — Export ke Excel (.xlsx)
+- **Backup/Restore** — Backup dan Restore data dalam format JSON (beserta fitur Export ke Excel)
 
 ### Portfolio Tracker
 - **Multi-asset support** — Stocks, ETF, Crypto, Gold (Logam Mulia), Real Estate
@@ -113,7 +113,7 @@
 
 1. **Clone repository**
    ```bash
-   git clone https://github.com/YOUR_USERNAME/cuangx-finance.git
+   git clone https://github.com/0xforcode-web/cuangx-expense-manager-and-portofolio-tracker.git
    cd cuangx-finance
    ```
 
