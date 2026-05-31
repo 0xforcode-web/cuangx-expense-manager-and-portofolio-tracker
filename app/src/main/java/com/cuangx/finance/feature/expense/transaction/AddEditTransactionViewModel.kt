@@ -29,6 +29,7 @@ data class AddEditTransactionUiState(
     val categoryId: Long? = null,
     val date: Long = System.currentTimeMillis(),
     val note: String = "",
+    val photoUri: String = "",
     val isBookmarked: Boolean = false,
     val isEditing: Boolean = false,
     val isSaving: Boolean = false,
@@ -123,6 +124,10 @@ class AddEditTransactionViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(isBookmarked = isBookmarked)
     }
 
+    fun updatePhotoUri(photoUri: String) {
+        _uiState.value = _uiState.value.copy(photoUri = photoUri)
+    }
+
     fun save() {
         val state = _uiState.value
         val amount = state.amount.toDoubleOrNull()
@@ -155,6 +160,7 @@ class AddEditTransactionViewModel @Inject constructor(
                     categoryId = if (state.type != TransactionType.TRANSFER) state.categoryId else null,
                     date = state.date,
                     note = state.note,
+                    photoUri = state.photoUri.ifBlank { null },
                     isBookmarked = state.isBookmarked,
                     source = TransactionSource.EXPENSE
                 )
