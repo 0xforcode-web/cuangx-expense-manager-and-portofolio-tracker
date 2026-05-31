@@ -7,6 +7,7 @@
 [![Android](https://img.shields.io/badge/Platform-Android-green.svg)](https://www.android.com/)
 [![Kotlin](https://img.shields.io/badge/Language-Kotlin-blue.svg)](https://kotlinlang.org/)
 [![Jetpack Compose](https://img.shields.io/badge/UI-Jetpack%20Compose-purple.svg)](https://developer.android.com/jetpack/compose)
+[![API](https://img.shields.io/badge/API-26%2B-brightgreen.svg)](https://android-arsenal.com/api?level=26)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 *A comprehensive personal finance app that combines expense management with investment portfolio tracking.*
@@ -15,68 +16,75 @@
 
 ---
 
-## 📱 Features
+## Features
 
-### 💰 Expense Manager
+### Expense Manager
 - **Double-entry bookkeeping** — Catatan keuangan lengkap
-- **Kategori & Sub-kategori** — Kelompokkan transaksi
-- **Budget per kategori** — Kontrol pengeluaran
-- **Recurring transactions** — Transaksi otomatis
-- **Statistik & Grafik** — Analisis keuangan visual
+- **Kategori & Sub-kategori** — Kelompokkan transaksi dengan icon dan warna
+- **Budget per kategori** — Kontrol pengeluaran (mingguan/bulanan/tahunan)
+- **Recurring transactions** — Transaksi otomatis berulang
+- **Statistik & Grafik** — Analisis keuangan visual (pie, bar, line chart)
+- **Calculator** — Kalkulator inline untuk input transaksi
+- **Backup/Restore** — Export ke Excel (.xlsx)
 
-### 📈 Portfolio Tracker
+### Portfolio Tracker
 - **Multi-asset support** — Stocks, ETF, Crypto, Gold (Logam Mulia), Real Estate
 - **Trading Journal** — Catatan keputusan investasi (source of truth)
-- **Real-time prices** — Harga dari Yahoo Finance API
+- **Real-time prices** — Harga dari Yahoo Finance & Swissquote API
 - **P&L tracking** — Unrealized & realized profit
 - **Dividend tracker** — Pantau dividen masuk
+- **Holding Detail** — Detail posisi dengan riwayat transaksi
 
-### 💳 Utang & Piutang
+### Utang & Piutang
 - **Debt tracking** — Catat utang yang harus dibayar
 - **Receivable tracking** — Catat piutang yang akan diterima
-- **Payment history** — Riwayat pembayaran
+- **Payment history** — Riwayat pembayaran cicilan
 - **Auto account sync** — Terintegrasi dengan Account
 
-### 📊 Dashboard Terintegrasi
+### Dashboard Terintegrasi
 - **Net Worth** — Total kekayaan bersih
 - **Cashflow bulanan** — Income vs Expense
 - **Portfolio value** — Nilai investasi saat ini
 - **Upcoming dues** — Jatuh tempo dekat
 
-### ⚙️ Pengaturan
+### Pengaturan
 - **Multiple account types** — Cash, Bank, E-Wallet, Broker, Credit Card
+- **Account Detail** — Detail akun dengan riwayat transaksi
 - **Passcode/Biometric lock** — Keamanan aplikasi
-- **Backup/Restore** — Export ke Excel (.xlsx)
 - **Dark/Light mode** — Tema sesuai preferensi
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Component | Technology |
 |-----------|------------|
-| Language | Kotlin |
+| Language | Kotlin 2.1.0 |
 | UI | Jetpack Compose + Material 3 |
 | Architecture | MVVM + Clean Architecture |
-| DI | Hilt |
-| Database | Room (local only) |
-| Networking | Retrofit + Moshi |
-| Charts | Vico |
-| Background | WorkManager |
+| DI | Hilt 2.53.1 |
+| Database | Room 2.6.1 (local only) |
+| Networking | Retrofit 2.11.0 + Moshi |
+| Charts | Vico 2.0.0-beta.2 |
+| Background | WorkManager 2.10.0 |
+| Image Loading | Coil 2.7.0 |
+| Excel Export | Apache POI 5.2.5 |
+| Biometric | AndroidX Biometric 1.1.0 |
 
 ---
 
-## 📦 Data Sources
+## Data Sources
 
 | Data | API | Endpoint |
 |------|-----|----------|
 | Stocks/ETF/Crypto | Yahoo Finance | `query1.finance.yahoo.com/v8/finance/chart/{TICKER}` |
 | Gold Price | Yahoo Finance | `GC=F` (Gold Futures) |
+| XAU/USD | Swissquote | `forex-data-feed.swissquote.com/public-quotes/bboquotes/instrument/XAU/USD` |
 | USD/IDR Rate | Yahoo Finance | `USDIDR=X` |
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 - Android Studio (latest stable)
@@ -100,9 +108,21 @@
    - Sync Gradle
    - Run on device/emulator
 
+### Build APK
+
+```bash
+# Debug APK
+.\gradlew.bat assembleDebug
+
+# Release APK (requires keystore)
+.\gradlew.bat assembleRelease
+```
+
+Output: `app/build/outputs/apk/`
+
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```
 app/src/main/java/com/cuangx/finance/
@@ -111,24 +131,36 @@ app/src/main/java/com/cuangx/finance/
 │   ├── network/         # Retrofit APIs, models
 │   ├── ui/              # Theme, navigation, components
 │   ├── datastore/       # Preferences
-│   └── util/            # Utilities
+│   └── util/            # Utilities (CurrencyFormatter, BackupManager)
 ├── domain/
 │   ├── model/           # Domain models
 │   └── repository/      # Repository interfaces
 ├── data/
+│   ├── di/              # Hilt modules
 │   └── repository/      # Repository implementations
 ├── feature/
 │   ├── dashboard/       # Dashboard screen
-│   ├── expense/         # Expense management
-│   ├── portfolio/       # Portfolio & Journal
+│   ├── expense/
+│   │   ├── account/     # Account CRUD + Detail
+│   │   ├── transaction/ # Transaction CRUD
+│   │   ├── category/    # Category management
+│   │   ├── budget/      # Budget tracking
+│   │   ├── recurring/   # Recurring transactions
+│   │   └── statistics/  # Charts & analytics
+│   ├── portfolio/
+│   │   ├── journal/     # Trading journal
+│   │   ├── holding/     # Holding detail + CRUD
+│   │   ├── dividend/    # Dividend tracker
+│   │   ├── analysis/    # Portfolio analysis
+│   │   └── networth/    # Net worth tracking
 │   ├── debt/            # Utang & Piutang
-│   └── settings/        # Settings
+│   └── settings/        # App settings
 └── worker/              # Background workers
 ```
 
 ---
 
-## 🔄 App Flow
+## App Flow
 
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
@@ -145,27 +177,28 @@ app/src/main/java/com/cuangx/finance/
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please read the [Contributing Guidelines](CONTRIBUTING.md) first.
 
 ---
 
-## 📞 Contact
+## Contact
 
 **CuangX-by-fachriceg**
 - GitHub: [@YOUR_USERNAME](https://github.com/YOUR_USERNAME)
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - [Yahoo Finance API](https://finance.yahoo.com/) for market data
+- [Swissquote](https://www.swissquote.com/) for gold price feed
 - [Material Design 3](https://m3.material.io/) for UI components
 - [Jetpack Compose](https://developer.android.com/jetpack/compose) for modern UI toolkit
