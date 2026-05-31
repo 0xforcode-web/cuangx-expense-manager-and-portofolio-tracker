@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
@@ -155,6 +156,9 @@ private fun NetWorthCard(netWorth: Double) {
 
 @Composable
 private fun MonthlySummaryCard(income: Double, expense: Double) {
+    val maxValue = maxOf(income, expense, 1.0)
+    val balance = income - expense
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -172,16 +176,36 @@ private fun MonthlySummaryCard(income: Double, expense: Double) {
                 fontWeight = FontWeight.Medium
             )
             Spacer(modifier = Modifier.height(12.dp))
+
+            // Visual bars
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                // Income bar
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = "Income",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(8.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(MaterialTheme.colorScheme.surface)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(fraction = (income / maxValue).toFloat())
+                                .height(8.dp)
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(IncomeColor)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = CurrencyFormatter.formatIDR(income),
                         style = MaterialTheme.typography.titleMedium,
@@ -189,12 +213,31 @@ private fun MonthlySummaryCard(income: Double, expense: Double) {
                         color = IncomeColor
                     )
                 }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+
+                // Expense bar
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = "Expense",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(8.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(MaterialTheme.colorScheme.surface)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(fraction = (expense / maxValue).toFloat())
+                                .height(8.dp)
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(ExpenseColor)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = CurrencyFormatter.formatIDR(expense),
                         style = MaterialTheme.typography.titleMedium,
@@ -203,6 +246,16 @@ private fun MonthlySummaryCard(income: Double, expense: Double) {
                     )
                 }
             }
+
+            // Balance
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Balance: ${if (balance >= 0) "+" else ""}${CurrencyFormatter.formatIDR(balance)}",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+                color = if (balance >= 0) IncomeColor else ExpenseColor,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
         }
     }
 }
