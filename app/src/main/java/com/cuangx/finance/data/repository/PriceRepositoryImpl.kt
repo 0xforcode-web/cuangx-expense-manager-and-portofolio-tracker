@@ -18,9 +18,18 @@ class PriceRepositoryImpl @Inject constructor(
     private val priceCacheDao: PriceCacheDao
 ) : PriceRepository {
 
+    companion object {
+        private const val CACHE_TTL_MS = 15 * 60 * 1000L // 15 minutes
+    }
+
     override suspend fun getPrice(ticker: String): PriceData? {
         val cached = priceCacheDao.getByTicker(ticker)
-        if (cached != null) return cached.toDomain()
+        if (cached != null) {
+            val age = System.currentTimeMillis() - cached.lastUpdated
+            if (age < CACHE_TTL_MS) {
+                return cached.toDomain()
+            }
+        }
 
         return try {
             val response = yahooFinanceApi.getQuote(ticker)

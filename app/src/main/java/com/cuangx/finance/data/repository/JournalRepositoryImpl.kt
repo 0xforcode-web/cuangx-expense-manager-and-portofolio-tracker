@@ -1,5 +1,7 @@
 package com.cuangx.finance.data.repository
 
+import androidx.room.withTransaction
+import com.cuangx.finance.core.database.CuangXDatabase
 import com.cuangx.finance.core.database.dao.AccountDao
 import com.cuangx.finance.core.database.dao.JournalEntryDao
 import com.cuangx.finance.core.database.dao.TransactionDao
@@ -19,7 +21,8 @@ import javax.inject.Singleton
 class JournalRepositoryImpl @Inject constructor(
     private val journalEntryDao: JournalEntryDao,
     private val accountDao: AccountDao,
-    private val transactionDao: TransactionDao
+    private val transactionDao: TransactionDao,
+    private val database: CuangXDatabase
 ) : JournalRepository {
 
     override fun getAll(): Flow<List<JournalEntry>> {
@@ -63,61 +66,119 @@ class JournalRepositoryImpl @Inject constructor(
     }
 
     override suspend fun insert(entry: JournalEntry): Long {
-        val journalId = journalEntryDao.insert(entry.toEntity())
+        return database.withTransaction {
+            val journalId = journalEntryDao.insert(entry.toEntity())
 
-        val transactionType = when (entry.action) {
-            JournalAction.BUY -> TransactionType.EXPENSE
-            JournalAction.SELL -> TransactionType.INCOME
-            JournalAction.DIVIDEND -> TransactionType.INCOME
-        }
+            val transactionType = when (entry.action) {
+                JournalAction.BUY -> TransactionType.EXPENSE
+                JournalAction.SELL -> TransactionType.INCOME
+                JournalAction.DIVIDEND -> TransactionType.INCOME
+            }
 
-        val transactionAmount = when (entry.action) {
-            JournalAction.BUY -> entry.totalAmount
-            JournalAction.SELL -> (entry.quantity * entry.price) - entry.fee
-            JournalAction.DIVIDEND -> entry.quantity * entry.price
-        }
+            val transactionAmount = when (entry.action) {
+                JournalAction.BUY -> entry.totalAmount
+                JournalAction.SELL -> (entry.quantity * entry.price) - entry.fee
+                JournalAction.DIVIDEND -> entry.quantity * entry.price
+            }
 
-        val note = when (entry.action) {
-            JournalAction.BUY -> "Beli ${entry.name} ${entry.quantity} @ ${entry.price}"
-            JournalAction.SELL -> "Jual ${entry.name} ${entry.quantity} @ ${entry.price}"
-            JournalAction.DIVIDEND -> "Dividen ${entry.name}"
-        }
+            val note = when (entry.action) {
+                JournalAction.BUY -> "Beli ${entry.name} ${entry.quantity} @ ${entry.price}"
+                JournalAction.SELL -> "Jual ${entry.name} ${entry.quantity} @ ${entry.price}"
+                JournalAction.DIVIDEND -> "Dividen ${entry.name}"
+            }
 
-        val transactionId = transactionDao.insert(
-            TransactionEntity(
-                type = transactionType.name,
-                amount = transactionAmount,
-                accountId = entry.accountId,
-                date = entry.date,
-                note = note,
-                linkedHoldingId = null,
-                linkedDividendId = if (entry.action == JournalAction.DIVIDEND) journalId else null,
-                source = "PORTFOLIO"
+            val transactionId = transactionDao.insert(
+                TransactionEntity(
+                    type = transactionType.name,
+                    amount = transactionAmount,
+                    accountId = entry.accountId,
+                    date = entry.date,
+                    note = note,
+                    linkedHoldingId = null,
+                    linkedDividendId = if (entry.action == JournalAction.DIVIDEND) journalId else null,
+                    source = "PORTFOLIO"
+                )
             )
-        )
 
-        val balanceChange = when (entry.action) {
-            JournalAction.BUY -> -transactionAmount
-            JournalAction.SELL -> transactionAmount
-            JournalAction.DIVIDEND -> transactionAmount
+            val balanceChange = when (entry.action) {
+                JournalAction.BUY -> -transactionAmount
+                JournalAction.SELL -> transactionAmount
+                JournalAction.DIVIDEND -> transactionAmount
+            }
+            accountDao.updateBalance(entry.accountId, balanceChange)
+
+            // Update journal entry with transactionId link
+            journalEntryDao.update(entry.copy(id = journalId, transactionId = transactionId).toEntity())
+
+            journalId
         }
-        accountDao.updateBalance(entry.accountId, balanceChange)
-
-        journalEntryDao.insert(entry.copy(id = journalId, transactionId = transactionId).toEntity())
-
-        return journalId
     }
 
     override suspend fun update(entry: JournalEntry) {
-        journalEntryDao.update(entry.toEntity())
+        database.withTransaction {
+            // Reverse old entry's balance effect
+            val oldEntry = journalEntryDao.getByIdOnce(entry.id)
+            if (oldEntry != null) {
+                val oldDomain = oldEntry.toDomain()
+                val oldAmount = when (oldDomain.action) {
+                    JournalAction.BUY -> oldDomain.totalAmount
+                    JournalAction.SELL -> (oldDomain.quantity * oldDomain.price) - oldDomain.fee
+                    JournalAction.DIVIDEND -> oldDomain.quantity * oldDomain.price
+                }
+                val reverseChange = when (oldDomain.action) {
+                    JournalAction.BUY -> oldAmount
+                    JournalAction.SELL -> -oldAmount
+                    JournalAction.DIVIDEND -> -oldAmount
+                }
+                accountDao.updateBalance(oldDomain.accountId, reverseChange)
+            }
+
+            // Update entry
+            journalEntryDao.update(entry.toEntity())
+
+            // Apply new balance effect
+            val newAmount = when (entry.action) {
+                JournalAction.BUY -> entry.totalAmount
+                JournalAction.SELL -> (entry.quantity * entry.price) - entry.fee
+                JournalAction.DIVIDEND -> entry.quantity * entry.price
+            }
+            val newChange = when (entry.action) {
+                JournalAction.BUY -> -newAmount
+                JournalAction.SELL -> newAmount
+                JournalAction.DIVIDEND -> newAmount
+            }
+            accountDao.updateBalance(entry.accountId, newChange)
+        }
     }
 
     override suspend fun delete(entry: JournalEntry) {
-        journalEntryDao.delete(entry.toEntity())
+        database.withTransaction {
+            // Reverse balance effect
+            val amount = when (entry.action) {
+                JournalAction.BUY -> entry.totalAmount
+                JournalAction.SELL -> (entry.quantity * entry.price) - entry.fee
+                JournalAction.DIVIDEND -> entry.quantity * entry.price
+            }
+            val reverseChange = when (entry.action) {
+                JournalAction.BUY -> amount
+                JournalAction.SELL -> -amount
+                JournalAction.DIVIDEND -> -amount
+            }
+            accountDao.updateBalance(entry.accountId, reverseChange)
+
+            // Delete associated transaction
+            if (entry.transactionId != null) {
+                transactionDao.deleteById(entry.transactionId)
+            }
+
+            // Delete journal entry
+            journalEntryDao.delete(entry.toEntity())
+        }
     }
 
     override suspend fun deleteById(id: Long) {
-        journalEntryDao.deleteById(id)
+        val entry = journalEntryDao.getByIdOnce(id)?.toDomain() ?: return
+        delete(entry)
     }
 
     override suspend fun getCount(): Int {

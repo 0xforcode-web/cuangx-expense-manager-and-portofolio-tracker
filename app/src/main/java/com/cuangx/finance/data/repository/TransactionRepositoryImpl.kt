@@ -1,5 +1,7 @@
 package com.cuangx.finance.data.repository
 
+import androidx.room.withTransaction
+import com.cuangx.finance.core.database.CuangXDatabase
 import com.cuangx.finance.core.database.dao.AccountDao
 import com.cuangx.finance.core.database.dao.TransactionDao
 import com.cuangx.finance.core.database.mapper.toDomain
@@ -15,7 +17,8 @@ import javax.inject.Singleton
 @Singleton
 class TransactionRepositoryImpl @Inject constructor(
     private val transactionDao: TransactionDao,
-    private val accountDao: AccountDao
+    private val accountDao: AccountDao,
+    private val database: CuangXDatabase
 ) : TransactionRepository {
 
     override fun getAll(): Flow<List<Transaction>> {
@@ -85,30 +88,38 @@ class TransactionRepositoryImpl @Inject constructor(
     }
 
     override suspend fun insert(transaction: Transaction): Long {
-        val id = transactionDao.insert(transaction.toEntity())
-        updateAccountBalance(transaction, isNew = true)
-        return id
+        return database.withTransaction {
+            val id = transactionDao.insert(transaction.toEntity())
+            updateAccountBalance(transaction)
+            id
+        }
     }
 
     override suspend fun update(transaction: Transaction) {
-        val oldTransaction = transactionDao.getByIdOnce(transaction.id)
-        if (oldTransaction != null) {
-            reverseAccountBalance(oldTransaction.toDomain())
+        database.withTransaction {
+            val oldTransaction = transactionDao.getByIdOnce(transaction.id)
+            if (oldTransaction != null) {
+                reverseAccountBalance(oldTransaction.toDomain())
+            }
+            transactionDao.update(transaction.toEntity())
+            updateAccountBalance(transaction)
         }
-        transactionDao.update(transaction.toEntity())
-        updateAccountBalance(transaction, isNew = true)
     }
 
     override suspend fun delete(transaction: Transaction) {
-        reverseAccountBalance(transaction)
-        transactionDao.delete(transaction.toEntity())
+        database.withTransaction {
+            reverseAccountBalance(transaction)
+            transactionDao.delete(transaction.toEntity())
+        }
     }
 
     override suspend fun deleteById(id: Long) {
-        val transaction = transactionDao.getByIdOnce(id)
-        if (transaction != null) {
-            reverseAccountBalance(transaction.toDomain())
-            transactionDao.deleteById(id)
+        database.withTransaction {
+            val transaction = transactionDao.getByIdOnce(id)
+            if (transaction != null) {
+                reverseAccountBalance(transaction.toDomain())
+                transactionDao.deleteById(id)
+            }
         }
     }
 
@@ -116,7 +127,7 @@ class TransactionRepositoryImpl @Inject constructor(
         return transactionDao.getCount()
     }
 
-    private suspend fun updateAccountBalance(transaction: Transaction, isNew: Boolean) {
+    private suspend fun updateAccountBalance(transaction: Transaction) {
         when (transaction.type) {
             TransactionType.INCOME -> {
                 accountDao.updateBalance(transaction.accountId, transaction.amount)

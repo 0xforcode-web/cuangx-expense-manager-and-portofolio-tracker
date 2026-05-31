@@ -25,7 +25,8 @@ class PriceRefreshWorker @AssistedInject constructor(
             if (result.isFailure) return Result.retry()
         }
 
-        priceRepository.refreshGoldPrice()
+        val goldResult = priceRepository.refreshGoldPrice()
+        if (goldResult.isFailure) return Result.retry()
 
         return Result.success()
     }

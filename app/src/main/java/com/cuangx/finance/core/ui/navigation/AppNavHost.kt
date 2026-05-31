@@ -132,7 +132,6 @@ fun AppNavHost(
             arguments = listOf(navArgument("ticker") { type = NavType.StringType })
         ) { backStackEntry ->
             val ticker = backStackEntry.arguments?.getString("ticker") ?: ""
-            val journalRepository = hiltViewModel<com.cuangx.finance.feature.portfolio.overview.PortfolioOverviewViewModel>().let { null }
             HoldingDetailScreenPlaceholder(ticker = ticker, onNavigateBack = { navController.popBackStack() })
         }
 

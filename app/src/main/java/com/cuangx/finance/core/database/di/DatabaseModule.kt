@@ -34,6 +34,11 @@ object DatabaseModule {
             CuangXDatabase::class.java,
             CuangXDatabase.DATABASE_NAME
         ).addCallback(DatabaseCallback())
+            // NOTE: For v1.0.0, destructive migration is acceptable (no existing users).
+            // Before releasing v2.0.0, implement proper Room migrations:
+            //   1. Add Migration(1, 2) with ALTER TABLE statements
+            //   2. Replace fallbackToDestructiveMigration() with .addMigrations(MIGRATION_1_2)
+            //   3. Test migration with room-testing library
             .fallbackToDestructiveMigration()
             .build()
     }
