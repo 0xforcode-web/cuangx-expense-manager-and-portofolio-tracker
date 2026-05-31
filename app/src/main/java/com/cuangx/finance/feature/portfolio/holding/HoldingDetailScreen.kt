@@ -12,8 +12,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -32,10 +33,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.cuangx.finance.core.ui.components.DeltaText
+import com.cuangx.finance.core.ui.components.FinanceListRow
+import com.cuangx.finance.core.ui.components.HeroCard
+import com.cuangx.finance.core.ui.components.MoneyText
 import com.cuangx.finance.core.ui.theme.ExpenseColor
 import com.cuangx.finance.core.ui.theme.IncomeColor
-import com.cuangx.finance.core.ui.theme.LossColor
-import com.cuangx.finance.core.ui.theme.ProfitColor
 import com.cuangx.finance.core.util.CurrencyFormatter
 import com.cuangx.finance.core.util.DateUtils
 import com.cuangx.finance.domain.model.JournalAction
@@ -94,75 +97,59 @@ fun HoldingDetailScreen(
             contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp)
         ) {
             item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                HeroCard(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = entries.firstOrNull()?.name ?: ticker,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
                     )
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(20.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                    Text(
+                        text = entries.firstOrNull()?.assetType?.displayName ?: "",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        Text(
-                            text = entries.firstOrNull()?.name ?: ticker,
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = entries.firstOrNull()?.assetType?.displayName ?: "",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("Qty", style = MaterialTheme.typography.bodySmall)
-                                Text(
-                                    text = currentQty.toString(),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("Avg Buy", style = MaterialTheme.typography.bodySmall)
-                                Text(
-                                    text = CurrencyFormatter.formatIDR(avgBuyPrice),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("Current", style = MaterialTheme.typography.bodySmall)
-                                Text(
-                                    text = CurrencyFormatter.formatIDR(currentPrice),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("Qty", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f))
+                            Text(
+                                text = currentQty.toString(),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-                        HorizontalDivider()
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Text(
-                            text = CurrencyFormatter.formatIDR(currentValue),
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "${if (pnl >= 0) "+" else ""}${CurrencyFormatter.formatIDR(pnl)} (${CurrencyFormatter.formatPercent(pnlPercent)})",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = if (pnl >= 0) ProfitColor else LossColor
-                        )
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("Avg Buy", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f))
+                            Text(
+                                text = CurrencyFormatter.formatIDR(avgBuyPrice),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("Current", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f))
+                            Text(
+                                text = CurrencyFormatter.formatIDR(currentPrice),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.2f))
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    MoneyText(
+                        amount = currentValue,
+                        emphasized = true,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                    DeltaText(amount = pnl, percent = pnlPercent)
                 }
             }
 
@@ -175,43 +162,24 @@ fun HoldingDetailScreen(
             }
 
             items(entries.sortedByDescending { it.date }) { entry ->
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "${entry.action.displayName} ${entry.quantity} @ ${CurrencyFormatter.formatIDR(entry.price)}",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Medium,
-                                color = when (entry.action) {
-                                    JournalAction.BUY -> ExpenseColor
-                                    JournalAction.SELL -> IncomeColor
-                                    JournalAction.DIVIDEND -> IncomeColor
-                                }
-                            )
-                            Text(
-                                text = DateUtils.formatDate(entry.date),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            if (entry.reason.isNotBlank()) {
-                                Text(
-                                    text = entry.reason,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
+                val actionColor = when (entry.action) {
+                    JournalAction.BUY -> ExpenseColor
+                    JournalAction.SELL -> IncomeColor
+                    JournalAction.DIVIDEND -> IncomeColor
+                }
+                val actionIcon = when (entry.action) {
+                    JournalAction.BUY -> Icons.Default.ArrowUpward
+                    JournalAction.SELL -> Icons.Default.ArrowDownward
+                    JournalAction.DIVIDEND -> Icons.Default.AttachMoney
+                }
+
+                FinanceListRow(
+                    icon = actionIcon,
+                    iconTint = actionColor,
+                    title = "${entry.action.displayName} ${entry.quantity} @ ${CurrencyFormatter.formatIDR(entry.price)}",
+                    subtitle = DateUtils.formatDate(entry.date),
+                    supporting = entry.reason.ifBlank { null },
+                    trailing = {
                         Column(horizontalAlignment = Alignment.End) {
                             Text(
                                 text = CurrencyFormatter.formatIDR(entry.quantity * entry.price),
@@ -227,7 +195,7 @@ fun HoldingDetailScreen(
                             }
                         }
                     }
-                }
+                )
             }
         }
     }

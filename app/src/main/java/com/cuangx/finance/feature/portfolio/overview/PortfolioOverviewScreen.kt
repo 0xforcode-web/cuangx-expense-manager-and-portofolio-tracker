@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -40,6 +41,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.cuangx.finance.core.ui.components.DeltaText
+import com.cuangx.finance.core.ui.components.EmptyPortfolio
+import com.cuangx.finance.core.ui.components.FinanceListRow
+import com.cuangx.finance.core.ui.components.HeroCard
+import com.cuangx.finance.core.ui.components.MoneyText
 import com.cuangx.finance.core.ui.theme.CategoryColors
 import com.cuangx.finance.core.ui.theme.LossColor
 import com.cuangx.finance.core.ui.theme.ProfitColor
@@ -111,12 +117,7 @@ fun PortfolioOverviewScreen(
 
             if (uiState.holdings.isEmpty() && !uiState.isLoading) {
                 item {
-                    Text(
-                        text = "Belum ada posisi. Tambahkan entry di Journal.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(16.dp)
-                    )
+                    EmptyPortfolio(onAddClick = onNavigateToAddJournal)
                 }
             }
 
@@ -138,67 +139,37 @@ private fun PortfolioSummaryCard(
     totalPnl: Double,
     totalPnlPercent: Double
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
+    HeroCard(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            "Total Portfolio Value",
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.78f)
         )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+        Spacer(modifier = Modifier.height(8.dp))
+        MoneyText(
+            amount = totalValue,
+            emphasized = true,
+            color = MaterialTheme.colorScheme.onPrimary
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(
-                text = "Total Portfolio Value",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-            Text(
-                text = CurrencyFormatter.formatIDR(totalValue),
-                style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "Invested",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                    )
-                    Text(
-                        text = CurrencyFormatter.formatIDR(totalCost),
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "P&L",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                    )
-                    Text(
-                        text = "${if (totalPnl >= 0) "+" else ""}${CurrencyFormatter.formatIDR(totalPnl)}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = if (totalPnl >= 0) ProfitColor else LossColor
-                    )
-                    Text(
-                        text = CurrencyFormatter.formatPercent(totalPnlPercent),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (totalPnl >= 0) ProfitColor else LossColor
-                    )
-                }
+            Column {
+                Text(
+                    "Invested",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
+                )
+                Text(
+                    CurrencyFormatter.formatIDR(totalCost),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
             }
+            DeltaText(amount = totalPnl, percent = totalPnlPercent)
         }
     }
 }
@@ -309,38 +280,14 @@ private fun HoldingItem(
     holding: HoldingPosition,
     onClick: () -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
+    FinanceListRow(
+        icon = Icons.Default.ShowChart,
+        iconTint = MaterialTheme.colorScheme.primary,
+        title = holding.name,
+        subtitle = "${holding.assetType.displayName} • ${holding.quantity}",
+        supporting = "Avg: ${CurrencyFormatter.formatIDR(holding.avgBuyPrice)}",
         onClick = onClick,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = holding.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium
-                )
-                Text(
-                    text = "${holding.assetType.displayName} • ${holding.quantity}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = "Avg: ${CurrencyFormatter.formatIDR(holding.avgBuyPrice)}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
+        trailing = {
             Column(horizontalAlignment = Alignment.End) {
                 Text(
                     text = CurrencyFormatter.formatIDR(holding.currentValue),
@@ -359,5 +306,5 @@ private fun HoldingItem(
                 )
             }
         }
-    }
+    )
 }
