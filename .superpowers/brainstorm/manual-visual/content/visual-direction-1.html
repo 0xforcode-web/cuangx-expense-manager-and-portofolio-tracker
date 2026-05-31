@@ -1,0 +1,145 @@
+<h2>Choose the Redesign Direction</h2>
+<p class="subtitle">Tiga arah visual untuk CuangX Finance. Klik salah satu kalau ada yang terasa paling “ini dia”.</p>
+
+<style>
+  .direction-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+    margin-top: 22px;
+  }
+  .direction-card {
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 18px;
+    overflow: hidden;
+    background: #10131a;
+    cursor: pointer;
+    transition: transform .2s ease, border-color .2s ease;
+  }
+  .direction-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255,255,255,.3);
+  }
+  .phone {
+    width: 220px;
+    height: 430px;
+    margin: 22px auto;
+    border-radius: 34px;
+    border: 8px solid rgba(255,255,255,.12);
+    padding: 16px;
+    box-sizing: border-box;
+    font-family: Inter, system-ui, sans-serif;
+  }
+  .phone h4 {
+    margin: 0;
+    font-size: 14px;
+  }
+  .metric {
+    font-size: 25px;
+    font-weight: 800;
+    margin-top: 8px;
+    letter-spacing: -.02em;
+  }
+  .pill-row {
+    display: flex;
+    gap: 6px;
+    margin: 14px 0;
+  }
+  .pill {
+    height: 26px;
+    flex: 1;
+    border-radius: 999px;
+  }
+  .block {
+    border-radius: 14px;
+    margin-top: 10px;
+    padding: 12px;
+    font-size: 11px;
+  }
+  .row-line {
+    height: 9px;
+    border-radius: 999px;
+    margin-top: 9px;
+  }
+  .a { background: #f7faf8; color: #122017; }
+  .a .block { background: #ffffff; box-shadow: 0 6px 22px rgba(17,24,39,.08); }
+  .a .metric { color: #14532d; }
+  .a .pill:nth-child(1) { background: #166534; }
+  .a .pill:nth-child(2) { background: #0f766e; }
+  .a .pill:nth-child(3) { background: #d97706; }
+  .a .row-line { background: #d7eadf; }
+  .b { background: #090d14; color: #f8fafc; }
+  .b .block { background: #111827; border: 1px solid rgba(148,163,184,.18); }
+  .b .metric { color: #f8fafc; }
+  .b .pill:nth-child(1) { background: #2563eb; }
+  .b .pill:nth-child(2) { background: #22c55e; }
+  .b .pill:nth-child(3) { background: #ef4444; }
+  .b .row-line { background: #263244; }
+  .c { background: #f3f7ff; color: #172033; }
+  .c .block { background: rgba(255,255,255,.72); border: 1px solid rgba(59,130,246,.14); backdrop-filter: blur(10px); }
+  .c .metric { color: #1d4ed8; }
+  .c .pill:nth-child(1) { background: #3b82f6; }
+  .c .pill:nth-child(2) { background: #10b981; }
+  .c .pill:nth-child(3) { background: #8b5cf6; }
+  .c .row-line { background: #cfddff; }
+  .direction-body {
+    padding: 0 18px 20px;
+  }
+  .direction-body h3 {
+    margin-bottom: 6px;
+  }
+  .direction-body p {
+    margin: 0;
+    color: #9ca3af;
+  }
+  @media (max-width: 900px) {
+    .direction-grid { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="direction-grid">
+  <div class="direction-card" data-choice="calm-ledger" onclick="toggleSelect(this)">
+    <div class="phone a">
+      <h4>Net Worth</h4>
+      <div class="metric">Rp 128,4 jt</div>
+      <div class="pill-row"><div class="pill"></div><div class="pill"></div><div class="pill"></div></div>
+      <div class="block">Cashflow Bulan Ini<div class="row-line"></div><div class="row-line" style="width:70%"></div></div>
+      <div class="block">Recent Transactions<div class="row-line"></div><div class="row-line" style="width:82%"></div><div class="row-line" style="width:58%"></div></div>
+      <div class="block">Budget Health<div class="row-line" style="width:65%"></div></div>
+    </div>
+    <div class="direction-body">
+      <h3>A. Calm Ledger</h3>
+      <p>Light, clean, mature. Cocok untuk daily finance yang sering dipakai dan mudah dibaca.</p>
+    </div>
+  </div>
+
+  <div class="direction-card" data-choice="market-terminal" onclick="toggleSelect(this)">
+    <div class="phone b">
+      <h4>Portfolio</h4>
+      <div class="metric">+7.8%</div>
+      <div class="pill-row"><div class="pill"></div><div class="pill"></div><div class="pill"></div></div>
+      <div class="block">Allocation<div class="row-line"></div><div class="row-line" style="width:77%"></div></div>
+      <div class="block">Holdings<div class="row-line"></div><div class="row-line" style="width:66%"></div><div class="row-line" style="width:91%"></div></div>
+      <div class="block">Market Sync<div class="row-line" style="width:54%"></div></div>
+    </div>
+    <div class="direction-body">
+      <h3>B. Market Terminal</h3>
+      <p>Dark, premium, data-forward. Keren untuk portfolio tracker, tapi perlu disiplin biar tidak melelahkan.</p>
+    </div>
+  </div>
+
+  <div class="direction-card" data-choice="soft-wealth" onclick="toggleSelect(this)">
+    <div class="phone c">
+      <h4>Dashboard</h4>
+      <div class="metric">Rp 128,4 jt</div>
+      <div class="pill-row"><div class="pill"></div><div class="pill"></div><div class="pill"></div></div>
+      <div class="block">Spending Insight<div class="row-line"></div><div class="row-line" style="width:75%"></div></div>
+      <div class="block">Goals<div class="row-line"></div><div class="row-line" style="width:62%"></div><div class="row-line" style="width:87%"></div></div>
+      <div class="block">Upcoming Dues<div class="row-line" style="width:68%"></div></div>
+    </div>
+    <div class="direction-body">
+      <h3>C. Soft Wealth</h3>
+      <p>Modern, friendly, slightly glassy. Lebih consumer-app, terasa fresh tanpa terlalu “bank”.</p>
+    </div>
+  </div>
+</div>
