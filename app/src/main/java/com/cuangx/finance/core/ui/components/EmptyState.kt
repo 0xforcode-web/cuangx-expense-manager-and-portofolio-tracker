@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.cuangx.finance.core.ui.theme.CuangXSpacing
 
 @Composable
 fun EmptyState(
@@ -37,14 +38,14 @@ fun EmptyState(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(32.dp),
+            .padding(CuangXSpacing.xxl),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Icon(
             imageVector = icon,
             contentDescription = null,
-            modifier = Modifier.size(64.dp),
+            modifier = Modifier.size(56.dp),
             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
         )
 
@@ -52,7 +53,7 @@ fun EmptyState(
 
         Text(
             text = title,
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
@@ -69,7 +70,10 @@ fun EmptyState(
         if (actionText != null && onAction != null) {
             Spacer(modifier = Modifier.height(24.dp))
             Button(onClick = onAction) {
-                Text(actionText)
+                Text(
+                    text = actionText,
+                    style = MaterialTheme.typography.labelLarge
+                )
             }
         }
     }
