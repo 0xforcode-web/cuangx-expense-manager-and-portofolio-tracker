@@ -1,5 +1,6 @@
 package com.cuangx.finance.feature.expense.statistics
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,6 +17,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -36,10 +39,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.cuangx.finance.core.ui.theme.CategoryColors
 import com.cuangx.finance.core.ui.theme.ExpenseColor
 import com.cuangx.finance.core.ui.theme.IncomeColor
 import com.cuangx.finance.core.util.CurrencyFormatter
+import com.cuangx.finance.domain.model.TransactionType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,6 +50,16 @@ fun StatisticsScreen(
     viewModel: StatisticsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val selectedCategories = remember(
+        uiState.selectedType,
+        uiState.categoryExpenses,
+        uiState.categoryIncome
+    ) {
+        when (uiState.selectedType) {
+            TransactionType.INCOME -> uiState.categoryIncome
+            else -> uiState.categoryExpenses
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -83,20 +96,59 @@ fun StatisticsScreen(
 
             // Category Pie Chart (Custom Visual)
             item {
-                CategoryPieChart(categories = uiState.categoryExpenses)
+                CategoryTypeSelector(
+                    selectedType = uiState.selectedType,
+                    onTypeSelected = viewModel::updateSelectedType
+                )
+            }
+
+            item {
+                CategoryPieChart(
+                    categories = selectedCategories,
+                    selectedType = uiState.selectedType
+                )
             }
 
             // Category List
             item {
                 Text(
-                    text = "Expense by Category",
+                    text = "${uiState.selectedType.displayName} by Category",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
             }
 
-            items(uiState.categoryExpenses) { categoryExpense ->
+            items(selectedCategories) { categoryExpense ->
                 CategoryExpenseItem(categoryExpense = categoryExpense)
+            }
+        }
+    }
+}
+
+@Composable
+private fun CategoryTypeSelector(
+    selectedType: TransactionType,
+    onTypeSelected: (TransactionType) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        listOf(TransactionType.EXPENSE, TransactionType.INCOME).forEach { type ->
+            if (selectedType == type) {
+                Button(
+                    onClick = { onTypeSelected(type) },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(text = type.displayName)
+                }
+            } else {
+                OutlinedButton(
+                    onClick = { onTypeSelected(type) },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(text = type.displayName)
+                }
             }
         }
     }
@@ -226,9 +278,10 @@ private fun BalanceCard(income: Double, expense: Double) {
 }
 
 @Composable
-private fun CategoryPieChart(categories: List<CategoryExpense>) {
-    if (categories.isEmpty()) return
-
+private fun CategoryPieChart(
+    categories: List<CategoryExpense>,
+    selectedType: TransactionType
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -242,47 +295,49 @@ private fun CategoryPieChart(categories: List<CategoryExpense>) {
                 .padding(16.dp)
         ) {
             Text(
-                text = "Category Breakdown",
+                text = "${selectedType.displayName} Category Breakdown",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Visual bar representation (like stacked bar)
-            Box(
+            if (categories.isEmpty()) {
+                Text(
+                    text = "Belum ada data kategori untuk periode ini",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                return@Column
+            }
+
+            val total = categories.sumOf { it.amount }
+
+            Canvas(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(16.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .size(180.dp)
+                    .align(Alignment.CenterHorizontally)
             ) {
-                var offsetX = 0f
-                val total = categories.sumOf { it.amount }
+                var startAngle = -90f
 
-                categories.forEachIndexed { index, category ->
-                    val fraction = (category.amount / total).toFloat()
-                    val colorIndex = category.category.id.toInt() % CategoryColors.size
-                    val color = CategoryColors[colorIndex]
-
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth(fraction = fraction)
-                            .height(16.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(color)
-                            .align(Alignment.CenterStart)
+                categories.forEach { category ->
+                    val sweepAngle = ((category.amount / total) * 360).toFloat()
+                    drawArc(
+                        color = category.pieColor(),
+                        startAngle = startAngle,
+                        sweepAngle = sweepAngle,
+                        useCenter = true
                     )
+                    startAngle += sweepAngle
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Legend
             categories.take(5).forEach { category ->
-                val colorIndex = category.category.id.toInt() % CategoryColors.size
-                val color = CategoryColors[colorIndex]
-
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -293,7 +348,7 @@ private fun CategoryPieChart(categories: List<CategoryExpense>) {
                         modifier = Modifier
                             .size(8.dp)
                             .clip(CircleShape)
-                            .background(color)
+                            .background(category.pieColor())
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
@@ -314,8 +369,7 @@ private fun CategoryPieChart(categories: List<CategoryExpense>) {
 
 @Composable
 private fun CategoryExpenseItem(categoryExpense: CategoryExpense) {
-    val colorIndex = categoryExpense.category.id.toInt() % CategoryColors.size
-    val color = CategoryColors[colorIndex]
+    val color = categoryExpense.pieColor()
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -380,3 +434,5 @@ private fun CategoryExpenseItem(categoryExpense: CategoryExpense) {
         }
     }
 }
+
+private fun CategoryExpense.pieColor(): Color = Color(category.color)
