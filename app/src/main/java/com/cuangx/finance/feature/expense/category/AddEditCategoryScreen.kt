@@ -21,11 +21,14 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -42,6 +45,7 @@ fun AddEditCategoryScreen(
     viewModel: AddEditCategoryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(categoryId, parentId) {
         if (categoryId != null && categoryId > 0) {
@@ -56,7 +60,7 @@ fun AddEditCategoryScreen(
         viewModel.event.collect { event ->
             when (event) {
                 is AddEditCategoryEvent.SaveSuccess -> onNavigateBack()
-                is AddEditCategoryEvent.ShowError -> {}
+                is AddEditCategoryEvent.ShowError -> snackbarHostState.showSnackbar(event.message)
             }
         }
     }
@@ -71,7 +75,8 @@ fun AddEditCategoryScreen(
                     }
                 }
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         Column(
             modifier = Modifier
@@ -89,7 +94,12 @@ fun AddEditCategoryScreen(
                     TransactionType.entries.filter { it != TransactionType.TRANSFER }.forEach { type ->
                         FilterChip(
                             selected = uiState.type == type,
-                            onClick = { viewModel.updateType(type) },
+                            onClick = {
+                                if (uiState.parentId == null) {
+                                    viewModel.updateType(type)
+                                }
+                            },
+                            enabled = uiState.parentId == null,
                             label = { Text(type.displayName) },
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = MaterialTheme.colorScheme.primaryContainer
