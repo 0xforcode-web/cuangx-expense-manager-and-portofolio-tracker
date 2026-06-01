@@ -20,10 +20,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -34,6 +35,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -177,7 +181,7 @@ private fun CategoryGroupItem(
                 
                 Box {
                     IconButton(onClick = { expandedMenu = true }) {
-                        Icon(androidx.compose.material.icons.filled.MoreVert, contentDescription = "More options")
+                        Icon(Icons.Default.MoreVert, contentDescription = "More options")
                     }
                     androidx.compose.material3.DropdownMenu(
                         expanded = expandedMenu,
@@ -189,7 +193,7 @@ private fun CategoryGroupItem(
                                 expandedMenu = false
                                 onEditCategory(categoryWithChildren.category)
                             },
-                            leadingIcon = { Icon(androidx.compose.material.icons.filled.Edit, contentDescription = null) }
+                            leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) }
                         )
                         androidx.compose.material3.DropdownMenuItem(
                             text = { Text("Hapus Kategori", color = MaterialTheme.colorScheme.error) },
@@ -197,7 +201,7 @@ private fun CategoryGroupItem(
                                 expandedMenu = false
                                 onDeleteCategory(categoryWithChildren.category)
                             },
-                            leadingIcon = { Icon(androidx.compose.material.icons.filled.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) }
+                            leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) }
                         )
                         androidx.compose.material3.DropdownMenuItem(
                             text = { Text("Tambah Sub-Kategori") },
@@ -216,7 +220,7 @@ private fun CategoryGroupItem(
                     modifier = Modifier.padding(start = 52.dp, end = 0.dp, bottom = 0.dp)
                 ) {
                     categoryWithChildren.children.forEach { child ->
-                        var childMenuExpanded by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+                        var childMenuExpanded by remember { mutableStateOf(false) }
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -237,7 +241,7 @@ private fun CategoryGroupItem(
                             )
                             Box {
                                 IconButton(onClick = { childMenuExpanded = true }, modifier = Modifier.size(32.dp)) {
-                                    Icon(androidx.compose.material.icons.filled.MoreVert, contentDescription = "More options", modifier = Modifier.size(16.dp))
+                                    Icon(Icons.Default.MoreVert, contentDescription = "More options", modifier = Modifier.size(16.dp))
                                 }
                                 androidx.compose.material3.DropdownMenu(
                                     expanded = childMenuExpanded,
@@ -249,7 +253,7 @@ private fun CategoryGroupItem(
                                             childMenuExpanded = false
                                             onEditCategory(child)
                                         },
-                                        leadingIcon = { Icon(androidx.compose.material.icons.filled.Edit, contentDescription = null) }
+                                        leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) }
                                     )
                                     androidx.compose.material3.DropdownMenuItem(
                                         text = { Text("Hapus", color = MaterialTheme.colorScheme.error) },
@@ -257,7 +261,7 @@ private fun CategoryGroupItem(
                                             childMenuExpanded = false
                                             onDeleteCategory(child)
                                         },
-                                        leadingIcon = { Icon(androidx.compose.material.icons.filled.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) }
+                                        leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) }
                                     )
                                 }
                             }
