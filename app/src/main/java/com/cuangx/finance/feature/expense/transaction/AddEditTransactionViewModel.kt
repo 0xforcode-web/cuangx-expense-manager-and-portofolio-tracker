@@ -92,7 +92,12 @@ class AddEditTransactionViewModel @Inject constructor(
     }
 
     fun updateType(type: TransactionType) {
-        _uiState.value = _uiState.value.copy(type = type)
+        val current = _uiState.value
+        _uiState.value = current.copy(
+            type = type,
+            categoryId = null,
+            toAccountId = if (type == TransactionType.TRANSFER) current.toAccountId else null
+        )
     }
 
     fun updateAmount(amount: String) {

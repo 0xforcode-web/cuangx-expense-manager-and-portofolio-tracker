@@ -17,14 +17,20 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -42,6 +48,7 @@ import com.cuangx.finance.core.ui.theme.CategoryColors
 import com.cuangx.finance.core.ui.theme.ExpenseColor
 import com.cuangx.finance.core.ui.theme.IncomeColor
 import com.cuangx.finance.core.util.CurrencyFormatter
+import com.cuangx.finance.core.util.DateUtils
 import com.cuangx.finance.domain.model.TransactionType
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -73,6 +80,15 @@ fun StatisticsScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp)
         ) {
+            item {
+                MonthlyPeriodSelector(
+                    anchorDate = uiState.anchorDate,
+                    onPrevious = viewModel::goToPreviousMonth,
+                    onNext = viewModel::goToNextMonth,
+                    onCurrent = viewModel::goToCurrentMonth
+                )
+            }
+
             // Income vs Expense Bar Chart
             item {
                 IncomeExpenseBarChart(
@@ -132,6 +148,44 @@ fun StatisticsScreen(
 
             items(selectedCategories) { categoryExpense ->
                 CategoryExpenseItem(categoryExpense = categoryExpense)
+            }
+        }
+    }
+}
+
+@Composable
+private fun MonthlyPeriodSelector(
+    anchorDate: Long,
+    onPrevious: () -> Unit,
+    onNext: () -> Unit,
+    onCurrent: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        IconButton(onClick = onPrevious) {
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "Previous month")
+        }
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = DateUtils.formatMonthYear(anchorDate),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = "Monthly",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            TextButton(onClick = onCurrent) {
+                Text("This month")
+            }
+            IconButton(onClick = onNext) {
+                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Next month")
             }
         }
     }

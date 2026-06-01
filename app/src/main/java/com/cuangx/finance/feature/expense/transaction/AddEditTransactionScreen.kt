@@ -187,24 +187,50 @@ fun AddEditTransactionScreen(
                 }
 
                 if (uiState.type != TransactionType.TRANSFER) {
+                    val categoriesForType = uiState.categories.filter { it.type == uiState.type }
+                    val parentCategories = categoriesForType.filter { it.parentId == null }
+                    val selectedCategory = categoriesForType.firstOrNull { it.id == uiState.categoryId }
+                    val selectedParentId = selectedCategory?.parentId ?: selectedCategory?.id
+                    val subCategories = selectedParentId?.let { parentId ->
+                        categoriesForType.filter { it.parentId == parentId }
+                    }.orEmpty()
+
                     Spacer(modifier = Modifier.height(16.dp))
                     Text("Category", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(bottom = 8.dp))
                     FlowRow(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        uiState.categories
-                            .filter { it.type == uiState.type }
-                            .forEach { category ->
+                        parentCategories.forEach { category ->
+                            FilterChip(
+                                selected = selectedParentId == category.id,
+                                onClick = { viewModel.updateCategoryId(category.id) },
+                                label = { Text(category.name) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer
+                                )
+                            )
+                        }
+                    }
+
+                    if (subCategories.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("Sub-category", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(bottom = 8.dp))
+                        FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            subCategories.forEach { category ->
                                 FilterChip(
                                     selected = uiState.categoryId == category.id,
                                     onClick = { viewModel.updateCategoryId(category.id) },
                                     label = { Text(category.name) },
                                     colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = MaterialTheme.colorScheme.primaryContainer
+                                        selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer
                                     )
                                 )
                             }
+                        }
                     }
                 }
             }
