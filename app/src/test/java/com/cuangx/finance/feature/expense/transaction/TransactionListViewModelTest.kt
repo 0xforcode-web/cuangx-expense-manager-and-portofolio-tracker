@@ -9,7 +9,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -39,8 +40,8 @@ class TransactionListViewModelTest {
     fun updateSelectedMode_switchesRepositoryRangeBetweenMonthAndYear() = runTest(testDispatcher) {
         val repository = RecordingTransactionRepository()
         val viewModel = TransactionListViewModel(repository)
+        val collectJob = backgroundScope.launch { viewModel.uiState.collect() }
 
-        viewModel.uiState.first()
         advanceUntilIdle()
 
         val initialAnchor = viewModel.uiState.value.anchorDate
@@ -56,14 +57,15 @@ class TransactionListViewModelTest {
             DateUtils.getStartOfYear(initialAnchor) to DateUtils.getEndOfYear(initialAnchor),
             repository.lastRange,
         )
+        collectJob.cancel()
     }
 
     @Test
     fun goToPreviousPeriod_shiftsByMonthForDailyAndByYearForTotal() = runTest(testDispatcher) {
         val repository = RecordingTransactionRepository()
         val viewModel = TransactionListViewModel(repository)
+        val collectJob = backgroundScope.launch { viewModel.uiState.collect() }
 
-        viewModel.uiState.first()
         advanceUntilIdle()
 
         val initialAnchor = viewModel.uiState.value.anchorDate
@@ -80,6 +82,7 @@ class TransactionListViewModelTest {
         advanceUntilIdle()
 
         assertEquals(add(totalAnchor, Calendar.YEAR, -1), viewModel.uiState.value.anchorDate)
+        collectJob.cancel()
     }
 
     private fun add(timestamp: Long, field: Int, amount: Int): Long {

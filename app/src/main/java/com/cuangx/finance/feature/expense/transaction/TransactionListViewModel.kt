@@ -68,43 +68,54 @@ class TransactionListViewModel @Inject constructor(
     private val totalExpense = activeRange.flatMapLatest { range ->
         transactionRepository.getTotalExpenseByDateRange(range.startDate, range.endDate)
     }
-
-    val uiState: StateFlow<TransactionListUiState> = combine(
-        allTransactions,
-        totalIncome,
-        totalExpense,
+    private val filters = combine(
         _searchQuery,
         _selectedType,
         _selectedCategoryId,
         _selectedMode,
         _anchorDate
-    ) { transactions, income, expense, query, type, categoryId, mode, anchorDate ->
+    ) { query, type, categoryId, mode, anchorDate ->
+        TransactionFilters(
+            query = query,
+            type = type,
+            categoryId = categoryId,
+            mode = mode,
+            anchorDate = anchorDate
+        )
+    }
+
+    val uiState: StateFlow<TransactionListUiState> = combine(
+        allTransactions,
+        totalIncome,
+        totalExpense,
+        filters
+    ) { transactions, income, expense, filters ->
         val filtered = transactions.filter { transaction ->
-            val matchesQuery = query.isBlank() || 
-                transaction.note.contains(query, ignoreCase = true)
-            val matchesType = type == null || transaction.type == type
-            val matchesCategory = categoryId == null || transaction.categoryId == categoryId
+            val matchesQuery = filters.query.isBlank() ||
+                transaction.note.contains(filters.query, ignoreCase = true)
+            val matchesType = filters.type == null || transaction.type == filters.type
+            val matchesCategory = filters.categoryId == null || transaction.categoryId == filters.categoryId
             matchesQuery && matchesType && matchesCategory
         }
         val anchorYear = Calendar.getInstance().apply {
-            timeInMillis = anchorDate
+            timeInMillis = filters.anchorDate
         }.get(Calendar.YEAR)
 
         TransactionListUiState(
             transactions = filtered,
             totalIncome = income,
             totalExpense = expense,
-            selectedMode = mode,
-            anchorDate = anchorDate,
+            selectedMode = filters.mode,
+            anchorDate = filters.anchorDate,
             dailyGroups = TransactionSummaryCalculator.dailyGroups(filtered),
             noteGroups = TransactionSummaryCalculator.noteGroups(filtered),
-            calendarCells = TransactionSummaryCalculator.calendarCells(anchorDate, filtered),
+            calendarCells = TransactionSummaryCalculator.calendarCells(filters.anchorDate, filtered),
             monthlySummaries = TransactionSummaryCalculator.monthlySummaries(anchorYear, filtered),
             totalSummary = TransactionSummaryCalculator.totalSummary(filtered),
             isLoading = false,
-            searchQuery = query,
-            selectedType = type,
-            selectedCategoryId = categoryId
+            searchQuery = filters.query,
+            selectedType = filters.type,
+            selectedCategoryId = filters.categoryId
         )
     }.stateIn(
         scope = viewModelScope,
@@ -187,4 +198,12 @@ class TransactionListViewModel @Inject constructor(
             }
         }
     }
+
+    private data class TransactionFilters(
+        val query: String,
+        val type: TransactionType?,
+        val categoryId: Long?,
+        val mode: ExpenseViewMode,
+        val anchorDate: Long
+    )
 }

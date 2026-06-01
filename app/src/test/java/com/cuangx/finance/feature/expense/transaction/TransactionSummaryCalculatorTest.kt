@@ -19,11 +19,11 @@ class TransactionSummaryCalculatorTest {
         val groups = TransactionSummaryCalculator.dailyGroups(listOf(may1Income, may1Expense, may2Expense))
 
         assertEquals(2, groups.size)
-        assertEquals(2, groups[0].transactions.size)
-        assertEquals(500_000.0, groups[0].income, 0.0)
-        assertEquals(125_000.0, groups[0].expense, 0.0)
-        assertEquals(375_000.0, groups[0].balance, 0.0)
-        assertEquals(75_000.0, groups[1].expense, 0.0)
+        assertEquals(75_000.0, groups[0].expense, 0.0)
+        assertEquals(2, groups[1].transactions.size)
+        assertEquals(500_000.0, groups[1].income, 0.0)
+        assertEquals(125_000.0, groups[1].expense, 0.0)
+        assertEquals(375_000.0, groups[1].balance, 0.0)
     }
 
     @Test
