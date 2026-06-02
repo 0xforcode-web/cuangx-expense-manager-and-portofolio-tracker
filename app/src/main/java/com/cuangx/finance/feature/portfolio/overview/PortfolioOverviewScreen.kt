@@ -211,28 +211,32 @@ private fun AssetAllocationChart(holdings: List<HoldingPosition>) {
             Spacer(modifier = Modifier.height(12.dp))
 
             // Stacked bar
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(12.dp)
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-            ) {
-                Row(modifier = Modifier.fillMaxSize()) {
-                    allocations.forEachIndexed { index, (type, value, _) ->
-                        val fraction = (value / totalValue).toFloat()
-                        val color = getCategoryColor(index)
-                        Box(
-                            modifier = Modifier
-                                .weight(fraction)
-                                .height(12.dp)
-                                .background(color)
-                        )
+            if (totalValue > 0) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(12.dp)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    Row(modifier = Modifier.fillMaxSize()) {
+                        allocations.forEachIndexed { index, (_, value, _) ->
+                            val fraction = (value / totalValue).toFloat()
+                            if (fraction > 0) {
+                                val color = getCategoryColor(index)
+                                Box(
+                                    modifier = Modifier
+                                        .weight(fraction)
+                                        .height(12.dp)
+                                        .background(color)
+                                )
+                            }
+                        }
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(12.dp))
+            }
 
             // Legend
             allocations.forEachIndexed { index, (type, value, percentage) ->

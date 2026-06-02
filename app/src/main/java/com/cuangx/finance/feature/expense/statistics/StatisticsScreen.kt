@@ -1,6 +1,7 @@
 package com.cuangx.finance.feature.expense.statistics
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,17 +17,24 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,6 +48,8 @@ import com.cuangx.finance.core.ui.theme.CategoryColors
 import com.cuangx.finance.core.ui.theme.ExpenseColor
 import com.cuangx.finance.core.ui.theme.IncomeColor
 import com.cuangx.finance.core.util.CurrencyFormatter
+import com.cuangx.finance.core.util.DateUtils
+import com.cuangx.finance.domain.model.TransactionType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,6 +57,11 @@ fun StatisticsScreen(
     viewModel: StatisticsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val selectedCategories = if (uiState.selectedType == TransactionType.EXPENSE) {
+        uiState.categoryExpenses
+    } else {
+        uiState.categoryIncome
+    }
 
     Scaffold(
         topBar = {
@@ -65,6 +80,15 @@ fun StatisticsScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp)
         ) {
+            item {
+                MonthlyPeriodSelector(
+                    anchorDate = uiState.anchorDate,
+                    onPrevious = viewModel::goToPreviousMonth,
+                    onNext = viewModel::goToNextMonth,
+                    onCurrent = viewModel::goToCurrentMonth
+                )
+            }
+
             // Income vs Expense Bar Chart
             item {
                 IncomeExpenseBarChart(
@@ -81,24 +105,117 @@ fun StatisticsScreen(
                 )
             }
 
-            // Category Pie Chart (Custom Visual)
             item {
-                CategoryPieChart(categories = uiState.categoryExpenses)
-            }
-
-            // Category List
-            item {
-                Text(
-                    text = "Expense by Category",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+                StatisticsTypeSelector(
+                    selectedType = uiState.selectedType,
+                    onSelectedTypeChange = viewModel::updateSelectedType
                 )
             }
 
-            items(uiState.categoryExpenses) { categoryExpense ->
+            item {
+                if (selectedCategories.isEmpty()) {
+                    Text(
+                        text = "Belum ada data kategori untuk periode ini",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                } else {
+                    CategoryPieChart(
+                        title = if (uiState.selectedType == TransactionType.EXPENSE) {
+                            "Expense by Category"
+                        } else {
+                            "Income by Category"
+                        },
+                        categories = selectedCategories
+                    )
+                }
+            }
+
+            if (selectedCategories.isNotEmpty()) {
+                item {
+                    Text(
+                        text = if (uiState.selectedType == TransactionType.EXPENSE) {
+                            "Expense by Category"
+                        } else {
+                            "Income by Category"
+                        },
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            items(selectedCategories) { categoryExpense ->
                 CategoryExpenseItem(categoryExpense = categoryExpense)
             }
         }
+    }
+}
+
+@Composable
+private fun MonthlyPeriodSelector(
+    anchorDate: Long,
+    onPrevious: () -> Unit,
+    onNext: () -> Unit,
+    onCurrent: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        IconButton(onClick = onPrevious) {
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "Previous month")
+        }
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = DateUtils.formatMonthYear(anchorDate),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = "Monthly",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            TextButton(onClick = onCurrent) {
+                Text("This month")
+            }
+            IconButton(onClick = onNext) {
+                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Next month")
+            }
+        }
+    }
+}
+
+@Composable
+private fun StatisticsTypeSelector(
+    selectedType: TransactionType,
+    onSelectedTypeChange: (TransactionType) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        FilterChip(
+            selected = selectedType == TransactionType.EXPENSE,
+            onClick = { onSelectedTypeChange(TransactionType.EXPENSE) },
+            label = { Text("Expense") },
+            colors = FilterChipDefaults.filterChipColors(
+                selectedContainerColor = ExpenseColor.copy(alpha = 0.18f)
+            )
+        )
+        FilterChip(
+            selected = selectedType == TransactionType.INCOME,
+            onClick = { onSelectedTypeChange(TransactionType.INCOME) },
+            label = { Text("Income") },
+            colors = FilterChipDefaults.filterChipColors(
+                selectedContainerColor = IncomeColor.copy(alpha = 0.18f)
+            )
+        )
     }
 }
 
@@ -226,9 +343,10 @@ private fun BalanceCard(income: Double, expense: Double) {
 }
 
 @Composable
-private fun CategoryPieChart(categories: List<CategoryExpense>) {
-    if (categories.isEmpty()) return
-
+private fun CategoryPieChart(
+    title: String,
+    categories: List<CategoryExpense>
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -242,46 +360,44 @@ private fun CategoryPieChart(categories: List<CategoryExpense>) {
                 .padding(16.dp)
         ) {
             Text(
-                text = "Category Breakdown",
+                text = title,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Visual bar representation (like stacked bar)
-            Box(
+            Canvas(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(16.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .size(220.dp)
+                    .align(Alignment.CenterHorizontally)
             ) {
-                var offsetX = 0f
-                val total = categories.sumOf { it.amount }
-
+                var startAngle = -90f
                 categories.forEachIndexed { index, category ->
-                    val fraction = (category.amount / total).toFloat()
-                    val colorIndex = category.category.id.toInt() % CategoryColors.size
-                    val color = CategoryColors[colorIndex]
-
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth(fraction = fraction)
-                            .height(16.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(color)
-                            .align(Alignment.CenterStart)
+                    val sweep = (category.percentage / 100.0 * 360.0).toFloat()
+                    drawArc(
+                        color = if (category.category.id == -1L) {
+                            Color(category.category.color)
+                        } else {
+                            CategoryColors[index % CategoryColors.size]
+                        },
+                        startAngle = startAngle,
+                        sweepAngle = sweep,
+                        useCenter = true
                     )
+                    startAngle += sweep
                 }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
 
             // Legend
-            categories.take(5).forEach { category ->
-                val colorIndex = category.category.id.toInt() % CategoryColors.size
-                val color = CategoryColors[colorIndex]
+            categories.take(5).forEachIndexed { index, category ->
+                val color = if (category.category.id == -1L) {
+                    Color(category.category.color)
+                } else {
+                    CategoryColors[index % CategoryColors.size]
+                }
 
                 Row(
                     modifier = Modifier
@@ -314,8 +430,11 @@ private fun CategoryPieChart(categories: List<CategoryExpense>) {
 
 @Composable
 private fun CategoryExpenseItem(categoryExpense: CategoryExpense) {
-    val colorIndex = categoryExpense.category.id.toInt() % CategoryColors.size
-    val color = CategoryColors[colorIndex]
+    val color = if (categoryExpense.category.id == -1L) {
+        Color(categoryExpense.category.color)
+    } else {
+        CategoryColors[categoryExpense.category.id.toInt().mod(CategoryColors.size)]
+    }
 
     Card(
         modifier = Modifier.fillMaxWidth(),

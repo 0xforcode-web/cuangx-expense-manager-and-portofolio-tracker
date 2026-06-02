@@ -45,6 +45,11 @@ class MainActivity : FragmentActivity() {
             val biometricEnabled by userPreferences.biometricEnabled.collectAsStateWithLifecycle(initialValue = false)
             val passcodeEnabled by userPreferences.passcodeEnabled.collectAsStateWithLifecycle(initialValue = false)
             val savedPasscode by userPreferences.passcodeValue.collectAsStateWithLifecycle(initialValue = "")
+            val defaultCurrency by userPreferences.defaultCurrency.collectAsStateWithLifecycle(initialValue = "IDR")
+
+            androidx.compose.runtime.LaunchedEffect(defaultCurrency) {
+                com.cuangx.finance.core.util.CurrencyFormatter.currentCurrencyCode = defaultCurrency
+            }
 
             var isUnlocked by remember { mutableStateOf(false) }
             val showLockScreen by remember(biometricEnabled, passcodeEnabled, isUnlocked) {

@@ -33,7 +33,8 @@ data class AddEditJournalUiState(
     val note: String = "",
     val isEditing: Boolean = false,
     val isSaving: Boolean = false,
-    val accounts: List<Account> = emptyList()
+    val accounts: List<Account> = emptyList(),
+    val existingHoldings: List<com.cuangx.finance.domain.model.Holding> = emptyList()
 )
 
 sealed class AddEditJournalEvent {
@@ -44,7 +45,8 @@ sealed class AddEditJournalEvent {
 @HiltViewModel
 class AddEditJournalViewModel @Inject constructor(
     private val journalRepository: JournalRepository,
-    private val accountRepository: AccountRepository
+    private val accountRepository: AccountRepository,
+    private val holdingRepository: com.cuangx.finance.domain.repository.HoldingRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AddEditJournalUiState())
@@ -57,12 +59,21 @@ class AddEditJournalViewModel @Inject constructor(
 
     init {
         loadAccounts()
+        loadHoldings()
     }
 
     private fun loadAccounts() {
         viewModelScope.launch {
             accountRepository.getAllActive().collect { accounts ->
                 _uiState.value = _uiState.value.copy(accounts = accounts)
+            }
+        }
+    }
+
+    private fun loadHoldings() {
+        viewModelScope.launch {
+            holdingRepository.getAll().collect { holdings ->
+                _uiState.value = _uiState.value.copy(existingHoldings = holdings)
             }
         }
     }
@@ -127,11 +138,11 @@ class AddEditJournalViewModel @Inject constructor(
             viewModelScope.launch { _event.emit(AddEditJournalEvent.ShowError("Nama aset tidak boleh kosong")) }
             return
         }
-        if (quantity == null || quantity <= 0) {
+        if (quantity == null || quantity <= 0 || quantity.isInfinite() || quantity.isNaN()) {
             viewModelScope.launch { _event.emit(AddEditJournalEvent.ShowError("Jumlah tidak valid")) }
             return
         }
-        if (price == null || price <= 0) {
+        if (price == null || price <= 0 || price.isInfinite() || price.isNaN()) {
             viewModelScope.launch { _event.emit(AddEditJournalEvent.ShowError("Harga tidak valid")) }
             return
         }

@@ -92,7 +92,12 @@ class AddEditTransactionViewModel @Inject constructor(
     }
 
     fun updateType(type: TransactionType) {
-        _uiState.value = _uiState.value.copy(type = type)
+        val current = _uiState.value
+        _uiState.value = current.copy(
+            type = type,
+            categoryId = null,
+            toAccountId = if (type == TransactionType.TRANSFER) current.toAccountId else null
+        )
     }
 
     fun updateAmount(amount: String) {
@@ -141,7 +146,7 @@ class AddEditTransactionViewModel @Inject constructor(
         val state = _uiState.value
         val amount = state.amount.toDoubleOrNull()
 
-        if (amount == null || amount <= 0) {
+        if (amount == null || amount <= 0 || amount.isInfinite() || amount.isNaN()) {
             viewModelScope.launch { _event.emit(AddEditTransactionEvent.ShowError("Masukkan nominal yang valid")) }
             return
         }

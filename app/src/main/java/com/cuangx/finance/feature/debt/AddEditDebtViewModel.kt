@@ -22,6 +22,7 @@ data class AddEditDebtUiState(
     val originalAmount: String = "",
     val currency: String = "IDR",
     val interestRate: String = "0",
+    val dateCreated: Long = System.currentTimeMillis(),
     val dueDate: Long? = null,
     val note: String = "",
     val isEditing: Boolean = false,
@@ -56,6 +57,7 @@ class AddEditDebtViewModel @Inject constructor(
                 originalAmount = debt.originalAmount.toLong().toString(),
                 currency = debt.currency,
                 interestRate = debt.interestRate.toString(),
+                dateCreated = debt.dateCreated,
                 dueDate = debt.dueDate,
                 note = debt.note,
                 isEditing = true
@@ -68,6 +70,7 @@ class AddEditDebtViewModel @Inject constructor(
     fun updateOriginalAmount(amount: String) { _uiState.value = _uiState.value.copy(originalAmount = amount) }
     fun updateCurrency(currency: String) { _uiState.value = _uiState.value.copy(currency = currency) }
     fun updateInterestRate(rate: String) { _uiState.value = _uiState.value.copy(interestRate = rate) }
+    fun updateDateCreated(date: Long) { _uiState.value = _uiState.value.copy(dateCreated = date) }
     fun updateDueDate(date: Long?) { _uiState.value = _uiState.value.copy(dueDate = date) }
     fun updateNote(note: String) { _uiState.value = _uiState.value.copy(note = note) }
 
@@ -98,7 +101,7 @@ class AddEditDebtViewModel @Inject constructor(
                     } else amount,
                     currency = state.currency,
                     interestRate = state.interestRate.toDoubleOrNull() ?: 0.0,
-                    dateCreated = System.currentTimeMillis(),
+                    dateCreated = if (state.isEditing) debtRepository.getByIdOnce(editingDebtId)?.dateCreated ?: state.dateCreated else state.dateCreated,
                     dueDate = state.dueDate,
                     status = DebtStatus.ACTIVE,
                     note = state.note

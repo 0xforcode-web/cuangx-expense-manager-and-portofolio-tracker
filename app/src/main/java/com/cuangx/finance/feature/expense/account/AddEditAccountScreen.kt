@@ -1,6 +1,9 @@
 package com.cuangx.finance.feature.expense.account
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,6 +31,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -35,26 +39,22 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cuangx.finance.core.ui.components.CalmCard
 import com.cuangx.finance.domain.model.AccountType
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun AddEditAccountScreen(
-    accountId: Long? = null,
     onNavigateBack: () -> Unit,
     viewModel: AddEditAccountViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
-    LaunchedEffect(accountId) {
-        if (accountId != null && accountId > 0) {
-            viewModel.loadAccount(accountId)
-        }
-    }
+    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         viewModel.event.collect { event ->
             when (event) {
                 is AddEditAccountEvent.SaveSuccess -> onNavigateBack()
-                is AddEditAccountEvent.ShowError -> {}
+                is AddEditAccountEvent.ShowError -> {
+                    android.widget.Toast.makeText(context, event.message, android.widget.Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
@@ -95,13 +95,15 @@ fun AddEditAccountScreen(
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
 
-                Row(modifier = Modifier.fillMaxWidth()) {
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     AccountType.entries.forEach { type ->
                         FilterChip(
                             selected = uiState.type == type,
                             onClick = { viewModel.updateType(type) },
                             label = { Text(type.displayName) },
-                            modifier = Modifier.padding(end = 8.dp),
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = MaterialTheme.colorScheme.primaryContainer
                             )
