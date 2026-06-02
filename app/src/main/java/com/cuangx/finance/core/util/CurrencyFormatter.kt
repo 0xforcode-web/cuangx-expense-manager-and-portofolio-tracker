@@ -5,6 +5,7 @@ import java.util.Currency
 import java.util.Locale
 
 object CurrencyFormatter {
+    var currentCurrencyCode: String = "IDR"
 
     fun formatAmount(amount: Double, currencyCode: String = "IDR", locale: Locale = Locale.getDefault()): String {
         return try {
@@ -18,14 +19,15 @@ object CurrencyFormatter {
     }
 
     fun formatIDR(amount: Double): String {
-        return formatAmount(amount, "IDR", Locale("id", "ID"))
+        val locale = if (currentCurrencyCode == "IDR") Locale("id", "ID") else Locale.US
+        return formatAmount(amount, currentCurrencyCode, locale)
     }
 
     fun formatIDRCompact(amount: Double): String {
         return when {
-            amount >= 1_000_000_000 -> String.format("Rp %.1fM", amount / 1_000_000_000)
-            amount >= 1_000_000 -> String.format("Rp %.1fjt", amount / 1_000_000)
-            amount >= 1_000 -> String.format("Rp %.1frb", amount / 1_000)
+            amount >= 1_000_000_000 -> String.format("%s %.1fM", currentCurrencyCode, amount / 1_000_000_000)
+            amount >= 1_000_000 -> String.format("%s %.1fjt", currentCurrencyCode, amount / 1_000_000)
+            amount >= 1_000 -> String.format("%s %.1frb", currentCurrencyCode, amount / 1_000)
             else -> formatIDR(amount)
         }
     }

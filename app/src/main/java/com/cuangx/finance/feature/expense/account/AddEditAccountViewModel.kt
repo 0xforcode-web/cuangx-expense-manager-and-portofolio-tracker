@@ -1,5 +1,6 @@
 package com.cuangx.finance.feature.expense.account
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cuangx.finance.domain.model.Account
@@ -35,7 +36,8 @@ sealed class AddEditAccountEvent {
 
 @HiltViewModel
 class AddEditAccountViewModel @Inject constructor(
-    private val accountRepository: AccountRepository
+    private val accountRepository: AccountRepository,
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AddEditAccountUiState())
@@ -46,18 +48,31 @@ class AddEditAccountViewModel @Inject constructor(
 
     private var editingAccountId: Long = 0
 
-    fun loadAccount(accountId: Long) {
+    init {
+        val accountId = savedStateHandle.get<Long>("accountId")
+        if (accountId != null && accountId > 0) {
+            loadAccount(accountId)
+        }
+    }
+
+    private fun loadAccount(accountId: Long) {
         viewModelScope.launch {
             val account = accountRepository.getByIdOnce(accountId) ?: return@launch
             editingAccountId = account.id
             _uiState.value = AddEditAccountUiState(
                 name = account.name,
                 type = account.type,
-                balance = account.balance.toLong().toString(),
+                balance = if (account.balance == account.balance.toLong().toDouble()) {
+                    account.balance.toLong().toString()
+                } else {
+                    account.balance.toString()
+                },
                 currency = account.currency,
                 icon = account.icon,
                 color = account.color,
-                creditLimit = account.creditLimit?.toLong()?.toString() ?: "",
+                creditLimit = account.creditLimit?.let {
+                    if (it == it.toLong().toDouble()) it.toLong().toString() else it.toString()
+                } ?: "",
                 settlementDay = account.settlementDay?.toString() ?: "",
                 isEditing = true
             )

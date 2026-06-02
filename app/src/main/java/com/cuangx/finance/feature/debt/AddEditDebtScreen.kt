@@ -23,10 +23,21 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material.icons.filled.DateRange
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -134,6 +145,42 @@ fun AddEditDebtScreen(
             Spacer(modifier = Modifier.height(12.dp))
 
             CalmCard(modifier = Modifier.fillMaxWidth()) {
+                var showDatePicker by remember { mutableStateOf(false) }
+                val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+
+                OutlinedTextField(
+                    value = dateFormat.format(Date(uiState.dateCreated)),
+                    onValueChange = {},
+                    label = { Text("Tanggal Transaksi") },
+                    readOnly = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    trailingIcon = {
+                        IconButton(onClick = { showDatePicker = true }) {
+                            Icon(Icons.Default.DateRange, contentDescription = "Pilih Tanggal")
+                        }
+                    }
+                )
+
+                if (showDatePicker) {
+                    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = uiState.dateCreated)
+                    DatePickerDialog(
+                        onDismissRequest = { showDatePicker = false },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                datePickerState.selectedDateMillis?.let { viewModel.updateDateCreated(it) }
+                                showDatePicker = false
+                            }) { Text("OK") }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showDatePicker = false }) { Text("Batal") }
+                        }
+                    ) {
+                        DatePicker(state = datePickerState)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
                 OutlinedTextField(
                     value = uiState.note,
                     onValueChange = viewModel::updateNote,

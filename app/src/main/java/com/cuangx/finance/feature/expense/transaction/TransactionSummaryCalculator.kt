@@ -56,9 +56,16 @@ object TransactionSummaryCalculator {
     }
 
     fun monthlySummaries(year: Int, transactions: List<Transaction>): List<TransactionMonthSummary> {
+        val calendar = Calendar.getInstance()
         val byMonth = transactions
-            .filter { Calendar.getInstance().apply { timeInMillis = it.date }.get(Calendar.YEAR) == year }
-            .groupBy { Calendar.getInstance().apply { timeInMillis = it.date }.get(Calendar.MONTH) }
+            .filter { 
+                calendar.timeInMillis = it.date
+                calendar.get(Calendar.YEAR) == year 
+            }
+            .groupBy { 
+                calendar.timeInMillis = it.date
+                calendar.get(Calendar.MONTH) 
+            }
 
         return (Calendar.DECEMBER downTo Calendar.JANUARY).map { month ->
             val monthTransactions = byMonth[month].orEmpty()

@@ -160,10 +160,8 @@ fun AppNavHost(
         composable(
             route = Screen.EditAccount.route,
             arguments = listOf(navArgument("accountId") { type = NavType.LongType })
-        ) { backStackEntry ->
-            val accountId = backStackEntry.arguments?.getLong("accountId")
+        ) { 
             AddEditAccountScreen(
-                accountId = accountId,
                 onNavigateBack = { navController.popBackStack() }
             )
         }

@@ -1,7 +1,5 @@
 package com.cuangx.finance.feature.expense.transaction
 
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -21,7 +19,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Calculate
 import com.cuangx.finance.core.ui.components.CalculatorDialog
 import androidx.compose.material.icons.filled.Delete
@@ -44,6 +41,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material.icons.filled.DateRange
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -64,7 +68,7 @@ fun AddEditTransactionScreen(
     viewModel: AddEditTransactionViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val context = androidx.compose.ui.platform.LocalContext.current
+    val context = LocalContext.current
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showCalculator by remember { mutableStateOf(false) }
 
@@ -97,7 +101,7 @@ fun AddEditTransactionScreen(
                 actions = {
                     if (uiState.isEditing) {
                         IconButton(onClick = { showDeleteDialog = true }) {
-                            Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
+                            Icon(Icons.Filled.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
                         }
                     }
                 }
@@ -140,7 +144,7 @@ fun AddEditTransactionScreen(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     trailingIcon = {
                         IconButton(onClick = { showCalculator = true }) {
-                            Icon(Icons.Default.Calculate, contentDescription = "Kalkulator")
+                            Icon(Icons.Filled.Calculate, contentDescription = "Kalkulator")
                         }
                     }
                 )
@@ -238,6 +242,42 @@ fun AddEditTransactionScreen(
             Spacer(modifier = Modifier.height(12.dp))
 
             CalmCard(modifier = Modifier.fillMaxWidth()) {
+                var showDatePicker by remember { mutableStateOf(false) }
+                val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+
+                OutlinedTextField(
+                    value = dateFormat.format(Date(uiState.date)),
+                    onValueChange = {},
+                    label = { Text("Tanggal") },
+                    readOnly = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    trailingIcon = {
+                        IconButton(onClick = { showDatePicker = true }) {
+                            Icon(Icons.Default.DateRange, contentDescription = "Pilih Tanggal")
+                        }
+                    }
+                )
+
+                if (showDatePicker) {
+                    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = uiState.date)
+                    DatePickerDialog(
+                        onDismissRequest = { showDatePicker = false },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                datePickerState.selectedDateMillis?.let { viewModel.updateDate(it) }
+                                showDatePicker = false
+                            }) { Text("OK") }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showDatePicker = false }) { Text("Batal") }
+                        }
+                    ) {
+                        DatePicker(state = datePickerState)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
                 OutlinedTextField(
                     value = uiState.note,
                     onValueChange = viewModel::updateNote,

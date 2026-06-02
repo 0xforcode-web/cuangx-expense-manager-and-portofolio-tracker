@@ -146,7 +146,7 @@ class AddEditTransactionViewModel @Inject constructor(
         val state = _uiState.value
         val amount = state.amount.toDoubleOrNull()
 
-        if (amount == null || amount <= 0) {
+        if (amount == null || amount <= 0 || amount.isInfinite() || amount.isNaN()) {
             viewModelScope.launch { _event.emit(AddEditTransactionEvent.ShowError("Masukkan nominal yang valid")) }
             return
         }

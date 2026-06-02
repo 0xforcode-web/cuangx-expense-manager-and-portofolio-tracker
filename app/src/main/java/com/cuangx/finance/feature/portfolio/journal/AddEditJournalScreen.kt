@@ -35,6 +35,16 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material.icons.filled.DateRange
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -52,6 +62,7 @@ fun AddEditJournalScreen(
     viewModel: AddEditJournalViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = androidx.compose.ui.platform.LocalContext.current
     var showDeleteDialog by remember { androidx.compose.runtime.mutableStateOf(false) }
     var calculatorTarget by remember { mutableStateOf<String?>(null) }
 
@@ -65,7 +76,9 @@ fun AddEditJournalScreen(
         viewModel.event.collect { event ->
             when (event) {
                 is AddEditJournalEvent.SaveSuccess -> onNavigateBack()
-                is AddEditJournalEvent.ShowError -> {}
+                is AddEditJournalEvent.ShowError -> {
+                    android.widget.Toast.makeText(context, event.message, android.widget.Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
@@ -139,13 +152,42 @@ fun AddEditJournalScreen(
 
             CalmCard(modifier = Modifier.fillMaxWidth()) {
                 if (uiState.assetType.hasTicker) {
-                    OutlinedTextField(
-                        value = uiState.ticker,
-                        onValueChange = viewModel::updateTicker,
-                        label = { Text("Ticker (e.g. BBCA.JK, BTC-USD, GC=F)") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
-                    )
+                    var expanded by remember { mutableStateOf(false) }
+
+                    ExposedDropdownMenuBox(
+                        expanded = expanded,
+                        onExpandedChange = { expanded = it }
+                    ) {
+                        OutlinedTextField(
+                            value = uiState.ticker,
+                            onValueChange = viewModel::updateTicker,
+                            label = { Text("Ticker (e.g. BBCA.JK, BTC-USD, GC=F)") },
+                            modifier = Modifier.fillMaxWidth().menuAnchor(),
+                            singleLine = true,
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) }
+                        )
+
+                        val distinctHoldings = uiState.existingHoldings.distinctBy { it.ticker }
+                        if (distinctHoldings.isNotEmpty()) {
+                            ExposedDropdownMenu(
+                                expanded = expanded,
+                                onDismissRequest = { expanded = false }
+                            ) {
+                                distinctHoldings.forEach { holding ->
+                                    if (!holding.ticker.isNullOrBlank()) {
+                                        DropdownMenuItem(
+                                            text = { Text(holding.ticker) },
+                                            onClick = {
+                                                viewModel.updateTicker(holding.ticker)
+                                                viewModel.updateName(holding.name)
+                                                expanded = false
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
                     Spacer(modifier = Modifier.height(16.dp))
                 }
 
@@ -230,6 +272,42 @@ fun AddEditJournalScreen(
             Spacer(modifier = Modifier.height(12.dp))
 
             CalmCard(modifier = Modifier.fillMaxWidth()) {
+                var showDatePicker by remember { mutableStateOf(false) }
+                val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+
+                OutlinedTextField(
+                    value = dateFormat.format(Date(uiState.date)),
+                    onValueChange = {},
+                    label = { Text("Tanggal") },
+                    readOnly = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    trailingIcon = {
+                        IconButton(onClick = { showDatePicker = true }) {
+                            Icon(Icons.Default.DateRange, contentDescription = "Pilih Tanggal")
+                        }
+                    }
+                )
+
+                if (showDatePicker) {
+                    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = uiState.date)
+                    DatePickerDialog(
+                        onDismissRequest = { showDatePicker = false },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                datePickerState.selectedDateMillis?.let { viewModel.updateDate(it) }
+                                showDatePicker = false
+                            }) { Text("OK") }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showDatePicker = false }) { Text("Batal") }
+                        }
+                    ) {
+                        DatePicker(state = datePickerState)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
                 OutlinedTextField(
                     value = uiState.reason,
                     onValueChange = viewModel::updateReason,
